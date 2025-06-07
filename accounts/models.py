@@ -18,7 +18,7 @@ class User(AbstractUser):
 	name = models.CharField(max_length=100)
 	avatar = models.ImageField( upload_to='avatars/', blank=True, null=True,
 	                           default='static/default_avatar.png')
-	gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
+	gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True,default='O')
 	birthday = models.DateField(blank=True, null=True)
 	phone = models.CharField(max_length=20, blank=True, null=True, unique=True)
 	user_type = models.PositiveSmallIntegerField(default=2,choices=USER_TYPE_CHOICES)  # 1超级管理员 2普通用户

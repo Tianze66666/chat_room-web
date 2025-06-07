@@ -17,6 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
+from .converts import EmailConverter
+from django.urls.converters import register_converter
+
+register_converter(EmailConverter,'ema')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

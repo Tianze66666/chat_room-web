@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+
+AUTH_USER_MODEL = 'accounts.User'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +44,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+	'whitenoise.middleware.WhiteNoiseMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.common.CommonMiddleware',
@@ -94,21 +98,29 @@ DATABASES = {
 
 #redis配置
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [
-                "redis://:Lzh040127!%40%23%24%25@120.26.129.134:8000/3"
-            ],
-        },
-    },
+	"default": {
+		"BACKEND": "channels_redis.core.RedisChannelLayer",
+		"CONFIG": {
+			"hosts": [
+				"redis://:Lzh040127!%40%23%24%25@120.26.129.134:8000/3"
+			],
+		},
+	},
 }
 
 # Celery Redis Broker 配置
 from urllib.parse import quote_plus
 
-REDIS_PASSWORD = quote_plus("Lzh040127！@#￥%")
+REDIS_PASSWORD = quote_plus("Lzh040127！@#$%")
 CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@120.26.129.134:8000/5"
+
+REDIS_CACHE_CONFIG = {
+	"host": '120.26.129.134',
+	"port": 8000,
+	"db": 4,
+	"password": 'Lzh040127!@#$%',
+	"decode_responses": True
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -128,22 +140,33 @@ AUTH_PASSWORD_VALIDATORS = [
 	},
 ]
 
+# 用户后端验证类
+AUTHENTICATION_BACKENDS = [
+    'accounts.auth_backend.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'UTC'
-
+# 时间设置
+TIME_ZONE = 'Asia/Shanghai'
+USE_TZ = False
 USE_I18N = True
 
-USE_TZ = True
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -158,3 +181,24 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = '3082566812@qq.com'  # 发送邮箱账号
 EMAIL_HOST_PASSWORD = 'plkrqnacstvsdfig'  # 邮箱SMTP授权码（不是登录密码）
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+# jwt配置
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'utils.jwt_authentication.JWTAuthentication',
+    ),
+}
+
+
+
+
+# 配置 token 过期时间
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),     # access token 有效期
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),        # refresh token 有效期
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+}
