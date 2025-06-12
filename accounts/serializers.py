@@ -67,9 +67,9 @@ class LoginSerializer(serializers.Serializer):
 		if email and password:
 			user = authenticate(request=self.context.get('request'), password=password, email=email)
 			if not user:
-				raise serializers.ValidationError("用户名或密码错误", code='authorization')
+				raise serializers.ValidationError({'password_or_email':'用户名或密码错误'})
 			if not user.is_active:
-				raise serializers.ValidationError("该用户已被禁用", code='authorization')
+				raise serializers.ValidationError({'active':'改用户已被禁用'})
 			attrs['user'] = user  # 后续可以使用
 			return attrs
 		if email and verify_code:
@@ -82,6 +82,7 @@ class LoginSerializer(serializers.Serializer):
 			if not user.is_active:
 				raise serializers.ValidationError("该用户已被禁用", code='authorization')
 			attrs['user'] = user
+			redis_client.delete(f'verify_code:{email}')
 			return attrs
 		raise serializers.ValidationError("必须同时提供账号密码或使用验证码登录", code='authorization')
 

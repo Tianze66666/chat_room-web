@@ -3,17 +3,18 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 import random
 from django.core.mail import send_mail
-from django.http.response import JsonResponse
 from asgiref.sync import async_to_sync
 from decoretas.limitcode import rate_limit_by_ip
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.response import Response
 from .serializers import UserSerializer, LoginSerializer, UpdateUserPasswordSerializer
 from utils.aredis import async_set
 from utils.sredis import ChangeTokenStatusMixin
 from django.utils.timezone import now
-
-
+from utils.reponst import UserResponse
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.exceptions import InvalidToken,TokenError
+from rest_framework_simplejwt.tokens import AccessToken,RefreshToken
+from rest_framework_simplejwt.tokens import BlacklistedToken,OutstandingToken
+from utils.sredis import redis_client
 # Create your views here.
 
 # 获取验证码
@@ -30,8 +31,9 @@ class GetCheckCode(GenericAPIView):
 		                 email
 		                 )
 		#秒返回，发送邮件任务放后台
-		return JsonResponse({"message": "验证码已发送，请注意查收"},
-		                    status=status.HTTP_200_OK)
+		# return JsonResponse({"message": "验证码已发送，请注意查收"},
+		#                     status=status.HTTP_200_OK)
+		return UserResponse.success()
 
 	@staticmethod
 	def safe_send_mail(subject, message, from_email, recipient_list):
@@ -62,11 +64,11 @@ class RegisterUser(GenericAPIView):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			serializer.save()
-			return Response({"message": "注册成功"}, status=status.HTTP_201_CREATED)
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+			return UserResponse.success(data='注册成功')
+		return UserResponse.fail(data='注册失败，请稍后重试')
 
 
-# 密码登录接口
+# 登录接口
 class LoginUser(ChangeTokenStatusMixin, GenericAPIView):
 	serializer_class = LoginSerializer
 
@@ -85,22 +87,36 @@ class LoginUser(ChangeTokenStatusMixin, GenericAPIView):
 		                 refresh_jti,
 		                 access_jti,
 		                 )
-		return Response({
+		return UserResponse.success(data={
 			"access": str(refresh.access_token),
 			"refresh": str(refresh),
-		}, status=status.HTTP_200_OK)
+		})
 
 
 # 退出登录
 class LogoutUser(ChangeTokenStatusMixin, GenericAPIView):
 	def post(self, request):
 		if not request.user.is_authenticated:
-			return Response({'error': 'false'}, status=status.HTTP_400_BAD_REQUEST)
+			# return Response({'error': 'false'}, status=status.HTTP_400_BAD_REQUEST)
+			return UserResponse.fail()
 		pool_submit_task(
 			self.change_user_token,
-			request.user.id
+			request.user.id,
+			None,
+			None,
+			1
 		)
-		return Response({'message': 'ok'}, status=status.HTTP_200_OK)
+		# return Response({'message': 'ok'}, status=status.HTTP_200_OK)
+		return UserResponse.success()
+
+	@staticmethod
+	def black_refresh_token(user_id):
+		refresh_jti = redis_client.get(f"user:refresh:{user_id}")
+		redis_client.delete(f"user:refresh:{user_id}")
+		if refresh_jti:
+			refresh_token_obj = OutstandingToken.objects.filter(jti=refresh_jti).first()
+			if refresh_token_obj:
+				BlacklistedToken.objects.get_or_create(token=refresh_token_obj)
 
 
 # 忘记密码
@@ -111,4 +127,46 @@ class UpdatePassword(GenericAPIView):
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		serializer.save()
-		return Response({"message": "ok"}, status=status.HTTP_200_OK)
+		# return Response({"message": "ok"}, status=status.HTTP_200_OK)
+		return UserResponse.success()
+
+
+class RefreshTokenGenericAPIView(ChangeTokenStatusMixin,GenericAPIView):
+	serializer_class = TokenRefreshSerializer
+
+	def post(self,request):
+		# 验证refresh_token是否是最新的
+		raw_refresh_token_str = request.data.get('refresh')
+		if not raw_refresh_token_str:
+			return UserResponse.fail(data='缺少refresh token', status=status.HTTP_400_BAD_REQUEST)
+		try:
+			old_refresh_token = RefreshToken(raw_refresh_token_str)
+			old_refresh_jti = old_refresh_token['jti']
+			user_id = old_refresh_token['user_id']
+		except TokenError:
+			return UserResponse.fail(data='无效的refresh token', status=status.HTTP_401_UNAUTHORIZED)
+		latest_jti = redis_client.get(f"user:refresh:{user_id}")
+		if not latest_jti == old_refresh_jti:
+			return UserResponse.fail(data='无效的refresh token', status=status.HTTP_401_UNAUTHORIZED)
+
+		# 重新签发token并记录
+		serializer = self.get_serializer(data=request.data)
+		try:
+			serializer.is_valid(raise_exception=True)
+		except InvalidToken as e:
+			return UserResponse.fail(data='刷新令牌无效或已过期', status=status.HTTP_401_UNAUTHORIZED)
+		except TokenError as e:
+			return UserResponse.fail(data='无效的refresh_token')
+		access_token_str = serializer.validated_data['access']
+		access_token = AccessToken(access_token_str)
+		access_jti = access_token['jti']
+		refresh_token_str = serializer.validated_data['refresh']
+		refresh_token = RefreshToken(refresh_token_str)
+		refresh_jti = refresh_token['jti']
+		pool_submit_task(self.change_user_token,user_id, refresh_jti, access_jti,0)
+		return UserResponse.success(data={'access': access_token_str,
+		                                  'refresh': refresh_token_str,})
+
+
+
+

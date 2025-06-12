@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 	"chat.apps.ChatConfig",
 	"accounts.apps.AccountsConfig",
 	"rest_framework",
+	'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -183,12 +184,17 @@ EMAIL_HOST_PASSWORD = 'plkrqnacstvsdfig'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
-# jwt配置
+# drf配置
 REST_FRAMEWORK = {
+	# jwt配置
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'utils.jwt_authentication.JWTAuthentication',
     ),
+	# 配置序列化器异常处理函数
+	'EXCEPTION_HANDLER': 'utils.exception_handle.custom_exception_handler',
 }
+
+
 
 
 
@@ -199,6 +205,6 @@ from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),     # access token 有效期
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),        # refresh token 有效期
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': False,
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }

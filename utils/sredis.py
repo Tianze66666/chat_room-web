@@ -13,16 +13,35 @@ redis_client = redis.Redis(
 )
 
 class ChangeTokenStatusMixin:
-    @staticmethod
-    def change_user_token(user_id, refresh_jti=None, access_jti=None):
-        key = "user:{}:{}"
-        pipe = redis_client.pipeline()
+    def __init__(self):
+        self.ex_access = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+        self.ex_refresh = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
+        self.key = "user:{}:{}"
+        self.mode_dic = {
+            0:self.set_token,
+            1:self.delete_token,
+        }
+    #self,user_id, refresh_jti=None, access_jti=None,type=0
 
-        if not access_jti:
-            pipe.delete(key.format('refresh', user_id, ))
-            pipe.delete(key.format('access', user_id, ))
-            pipe.execute()
-            return
-        pipe.set(key.format('refresh', user_id, ), refresh_jti, ex=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'])
-        pipe.set(key.format('access', user_id, ), access_jti, ex=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'])
+
+    def change_user_token(self,user_id, refresh_jti=None, access_jti=None,type=0):
+        try:
+            self.mode_dic.get(type)(user_id, refresh_jti, access_jti)
+        except Exception as e:
+            print(e)
+
+    def set_token(self,user_id, refresh_jti=None, access_jti=None):
+        pipe = redis_client.pipeline()
+        if refresh_jti:
+            pipe.set(self.key.format('refresh', user_id, ), refresh_jti, ex=self.ex_refresh)
+        if access_jti:
+            pipe.set(self.key.format('access', user_id, ), access_jti, ex=self.ex_access)
         pipe.execute()
+        return
+
+    def delete_token(self,user_id,*args,**kwargs):
+        pipe = redis_client.pipeline()
+        pipe.delete(self.key.format('refresh', user_id, ))
+        pipe.delete(self.key.format('access', user_id, ))
+        pipe.execute()
+        return
