@@ -56,11 +56,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
 	email = serializers.CharField(required=True)
-	password = serializers.CharField(required=True, write_only=True)
+	password = serializers.CharField(required=False, write_only=True)
+	verify_code = serializers.CharField(required=False,write_only=True,
+	                                    max_length=6,min_length=6)
 
 	def validate(self, attrs):
 		email = attrs.get('email')
 		password = attrs.get('password')
+		verify_code = attrs.get('verify_code')
 		if email and password:
 			user = authenticate(request=self.context.get('request'), password=password, email=email)
 			if not user:
@@ -69,7 +72,18 @@ class LoginSerializer(serializers.Serializer):
 				raise serializers.ValidationError("该用户已被禁用", code='authorization')
 			attrs['user'] = user  # 后续可以使用
 			return attrs
-		raise serializers.ValidationError("必须同时提供用户名和密码", code='authorization')
+		if email and verify_code:
+			redis_code = redis_client.get(f'verify_code:{email}')
+			if not redis_code:
+				raise serializers.ValidationError({'verify_code':'请获取验证码'})
+			if not redis_code == verify_code:
+				raise serializers.ValidationError({'verify_code': '验证码错误'})
+			user = authenticate(request=self.context.get('request'),email=email,verify_login=True)
+			if not user.is_active:
+				raise serializers.ValidationError("该用户已被禁用", code='authorization')
+			attrs['user'] = user
+			return attrs
+		raise serializers.ValidationError("必须同时提供账号密码或使用验证码登录", code='authorization')
 
 
 class UpdateUserPasswordSerializer(serializers.Serializer):

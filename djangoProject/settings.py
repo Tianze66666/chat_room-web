@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-ys9q#imzw6=8k7gh7e3x*y+&$p_6=(k7)(5#vi64l+nr4l2=8+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', '120.26.129.134']
 
 # Application definition
 
@@ -178,8 +178,8 @@ EMAIL_HOST = 'smtp.qq.com'  # SMTP服务器，比如QQ邮箱
 EMAIL_PORT = 587  # 端口，一般587或465
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = '3082566812@qq.com'  # 发送邮箱账号
-EMAIL_HOST_PASSWORD = 'plkrqnacstvsdfig'  # 邮箱SMTP授权码（不是登录密码）
+EMAIL_HOST_USER = '3082566812@qq.com'
+EMAIL_HOST_PASSWORD = 'plkrqnacstvsdfig'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
