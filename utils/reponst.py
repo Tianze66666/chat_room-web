@@ -3,9 +3,10 @@
 from rest_framework.response import Response
 from rest_framework import status as http_status
 
+
 class UserResponse:
 	@staticmethod
-	def success(code=1000, data=None, message="success",status=http_status.HTTP_200_OK):
+	def success(code=1000, data=None, message="success", status=http_status.HTTP_200_OK):
 		res = {
 			"code": code,
 			"message": message,
@@ -13,10 +14,10 @@ class UserResponse:
 		}
 		if not data:
 			res.pop('data')
-		return Response(res,status=status)
+		return Response(res, status=status)
 
 	@staticmethod
-	def fail(code=1001, data=None, message="fail",status=http_status.HTTP_200_OK):
+	def fail(code=1001, data=None, message="fail", status=http_status.HTTP_200_OK):
 		res = {
 			"code": code,
 			"message": message,
@@ -24,4 +25,4 @@ class UserResponse:
 		}
 		if not data:
 			res.pop('data')
-		return Response(res,status=status)
+		return Response(res, status=status)

@@ -6,9 +6,9 @@ from django.contrib.auth.models import AbstractUser,Permission,Group
 
 class User(AbstractUser):
 	GENDER_CHOICES = (
-		('M', 'Male'),
-		('F', 'Female'),
-		('O', 'Other'),
+		('M', '男'),
+		('F', '女'),
+		('O', '其他'),
 	)
 	USER_TYPE_CHOICES = (
 		(1,'Super admin'),

@@ -42,9 +42,11 @@ INSTALLED_APPS = [
 	"accounts.apps.AccountsConfig",
 	"rest_framework",
 	'rest_framework_simplejwt.token_blacklist',
+	'corsheaders',
 ]
 
 MIDDLEWARE = [
+	'corsheaders.middleware.CorsMiddleware',
 	'whitenoise.middleware.WhiteNoiseMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
@@ -54,7 +56,7 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
+CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'djangoProject.urls'
 
 TEMPLATES = [
