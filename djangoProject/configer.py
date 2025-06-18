@@ -5,3 +5,6 @@ EMAIL_VERIFY_CODE_MESSAGE = '您的验证码是：{}，有效期5分钟，请勿
 
 VERIFY_CODE_EXP = 300
 
+USER_CHANNEL_KEY = 'user_channel_{}'
+
+GROUP_NAME = 'channel_{}'

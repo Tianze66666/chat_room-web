@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import User
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 
 class Channel(models.Model):
@@ -12,7 +13,8 @@ class Channel(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	name = models.CharField(max_length=100, unique=True, verbose_name='频道名称')
 	description = models.TextField(blank=True, verbose_name='频道描述')
-	avatar = models.ImageField(upload_to='channel_avatars/', blank=True, null=True, verbose_name='频道头像')
+	avatar = models.ImageField(upload_to='channel_avatars/', blank=True, null=True, verbose_name='频道头像',
+	                           default='default/default_avatar.jpg')
 	owner_id = models.BigIntegerField(verbose_name='创建者ID')
 	join_policy = models.CharField(
 		max_length=10,
@@ -73,8 +75,19 @@ class ChannelMember(models.Model):
 		(1, '普通成员'),
 		(2, '管理员'),
 	)
-	user_id = models.BigIntegerField(verbose_name='用户ID', db_index=True)
-	channel_id = models.BigIntegerField(verbose_name='频道ID', db_index=True)
+	user = models.ForeignKey(get_user_model(),
+	                         verbose_name='用户ID',
+	                         db_index=True,
+	                         on_delete=models.CASCADE,
+	                         related_name='channel_memberships',
+	                         )
+	channel = models.ForeignKey(
+		'Channel',
+		db_index=True,
+		on_delete=models.CASCADE,
+		related_name='members',
+		verbose_name='频道'
+	)
 	is_admin = models.BooleanField(default=False, verbose_name='是否管理员')
 	is_muted = models.BooleanField(default=False, verbose_name='是否禁言')
 	joined_at = models.DateTimeField(auto_now_add=True, verbose_name='加入时间')
@@ -83,11 +96,11 @@ class ChannelMember(models.Model):
 		db_table = 'chat_channel_member'
 		verbose_name = '频道成员'
 		verbose_name_plural = '频道成员管理'
-		unique_together = ('user_id', 'channel_id')
+		unique_together = ('user', 'channel')
 		ordering = ['-joined_at']
 
 	def __str__(self):
-		return f'User {self.user_id} in Channel {self.channel_id}'
+		return f'User {self.user} in Channel {self.channel}'
 
 
 class Message(models.Model):
@@ -231,7 +244,7 @@ class Notification(models.Model):
 		APPROVAL_RESULT = 'approval_result', '审批结果'
 		MESSAGE = 'message', '聊天消息'
 		SYSTEM = 'system', '系统通知'
-		# 以后可以继续加类型
+	# 以后可以继续加类型
 
 	user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, verbose_name='用户',
 	                         related_name='notifications')

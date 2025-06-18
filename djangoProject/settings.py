@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -27,7 +28,7 @@ SECRET_KEY = 'django-insecure-ys9q#imzw6=8k7gh7e3x*y+&$p_6=(k7)(5#vi64l+nr4l2=8+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '120.26.129.134', '47.122.130.222']
+ALLOWED_HOSTS = ['127.0.0.1', '120.26.129.134', config('ALLOW_HOSTS')]
 
 # Application definition
 
@@ -88,10 +89,10 @@ DATABASES = {
 	'default': {
 		'ENGINE': 'django.db.backends.mysql',
 		'NAME': 'ChatRoom',
-		'HOST': '47.122.130.222',
-		'PORT': 3306,
-		'USER': 'root',
-		'PASSWORD': 'Lzh040127',
+		'HOST': config('DB_HOST'),
+		'PORT': config('DB_PORT'),
+		'USER': config('DB_USER'),
+		'PASSWORD': config('DB_PASSWORD'),
 		'POOL_OPTIONS': {
 			'POOL_SIZE': 10,
 			'MAX_OVERFLOW': 30,
@@ -105,7 +106,7 @@ CHANNEL_LAYERS = {
 		"BACKEND": "channels_redis.core.RedisChannelLayer",
 		"CONFIG": {
 			"hosts": [
-				"redis://:Lzh040127!%40%23%24%25@47.122.130.222:8000/3"
+				config('REDIS_URL')
 			],
 		},
 	},
@@ -114,14 +115,14 @@ CHANNEL_LAYERS = {
 # Celery Redis Broker 配置
 from urllib.parse import quote_plus
 
-REDIS_PASSWORD = quote_plus("Lzh040127！@#$%")
-CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@47.122.130.222:8000/5"
+REDIS_PASSWORD = quote_plus(config('REDIS_PASSWORD'))
+CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{config('REDIS_HOST')}:{config('REDIS_PORT')}/5"
 
 REDIS_CACHE_CONFIG = {
-	"host": '47.122.130.222',
-	"port": 8000,
+	"host": config('REDIS_HOST'),
+	"port": config('REDIS_PORT'),
 	"db": 4,
-	"password": 'Lzh040127!@#$%',
+	"password": config('REDIS_PASSWORD'),
 	"decode_responses": True
 }
 
@@ -161,7 +162,8 @@ USE_I18N = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
@@ -178,8 +180,8 @@ EMAIL_HOST = 'smtp.qq.com'  # SMTP服务器，比如QQ邮箱
 EMAIL_PORT = 587  # 端口，一般587或465
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = '3082566812@qq.com'
-EMAIL_HOST_PASSWORD = 'plkrqnacstvsdfig'
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # drf配置
@@ -196,7 +198,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # access token 有效期
+	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=300),  # access token 有效期
 	'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # refresh token 有效期
 	'ROTATE_REFRESH_TOKENS': True,
 	'BLACKLIST_AFTER_ROTATION': True,

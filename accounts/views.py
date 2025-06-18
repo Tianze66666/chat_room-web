@@ -17,7 +17,7 @@ from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken
 from utils.sredis import redis_client
 from .models import User
 from djangoProject.configer import VERIFY_CODE_EXP, EMAIL_VERIFY_CODE_MESSAGE, EMAIL_VERIFY_CODE_SUBJECT
-
+from chat.models import ChannelMember,Channel
 
 # Create your views here.
 
@@ -64,8 +64,13 @@ class RegisterUser(GenericAPIView):
 	def post(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			serializer.save()
-			return UserResponse.success(data='注册成功')
+			user = serializer.save()
+			default_channel = Channel.objects.get(id=1)
+			try:
+				channel_member = ChannelMember.objects.create(user=user,channel=default_channel)
+				return UserResponse.success(data='注册成功')
+			except Exception as e:
+				print(e)
 		data = next(iter(serializer.errors.values()))[0]
 		if data == '用户已经存在':
 			return UserResponse.fail(code=1004,data=data)

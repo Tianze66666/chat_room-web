@@ -25,8 +25,8 @@ class ChannelAdmin(admin.ModelAdmin):
 
 @admin.register(ChannelMember)
 class ChannelMemberAdmin(admin.ModelAdmin):
-    list_display = ('user_id', 'channel_id', 'is_admin', 'is_muted', 'joined_at')
-    search_fields = ('user_id', 'channel_id')
+    list_display = ('user', 'channel', 'is_admin', 'is_muted', 'joined_at')
+    search_fields = ('user', 'channel')
     list_filter = ('is_admin', 'is_muted')
     ordering = ('-joined_at',)
     list_per_page = 50
