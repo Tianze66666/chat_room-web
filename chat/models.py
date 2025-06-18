@@ -16,6 +16,7 @@ class Channel(models.Model):
 	avatar = models.ImageField(upload_to='channel_avatars/', blank=True, null=True, verbose_name='频道头像',
 	                           default='default/default_avatar.jpg')
 	owner_id = models.BigIntegerField(verbose_name='创建者ID')
+	is_all_muted = models.BooleanField(verbose_name='是否全员禁言',default=False)
 	join_policy = models.CharField(
 		max_length=10,
 		choices=JOIN_POLICY_CHOICES,
@@ -105,8 +106,8 @@ class ChannelMember(models.Model):
 
 class Message(models.Model):
 	id = models.BigIntegerField(primary_key=True)  # 雪花ID
-	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='发送者')
-	channel = models.ForeignKey(Channel, on_delete=models.CASCADE, verbose_name='频道')
+	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='发送者',db_constraint=False)
+	channel = models.ForeignKey(Channel, on_delete=models.CASCADE, verbose_name='频道',db_constraint=False)
 	content = models.TextField(blank=True, null=True, verbose_name='消息内容')
 	file_id = models.BigIntegerField(blank=True, null=True, verbose_name='文件ID')
 	timestamp = models.DateTimeField(auto_now_add=True, verbose_name='发送时间')

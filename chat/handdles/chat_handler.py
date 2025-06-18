@@ -1,7 +1,13 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
 from utils.ws_response import WSResponse
-from djangoProject.configer import GROUP_NAME
+from utils.flake_id import get_snowflake_id
+from djangoProject.configer import CHANNEL_NAME, CHANNEL_MEMBERS
+from chat.tasks import save_message_async
+from utils.aredis import redis_client,ChannelMuteCache
+from chat.models import ChannelMember
+from asgiref.sync import sync_to_async
+
 
 class GroupChatHandles(object):
 	def __init__(self, consumer, data):
@@ -11,6 +17,7 @@ class GroupChatHandles(object):
 			'group': self._group_chat,
 			'private': self._private_chat
 		}
+		self.channel_mute_cache = ChannelMuteCache()
 
 	async def handle(self):
 		print('收到消息', self.data)
@@ -23,20 +30,41 @@ class GroupChatHandles(object):
 
 	# 群组聊天
 	async def _group_chat(self):
-		group_id = self.data.get("group_id")
+		channel_id = self.data.get("channel_id")
 		message = self.data.get("message")
 		user = self.consumer.scope["user"]
-		if not group_id or not message:
+		if not channel_id or not message:
 			await self.consumer.send(WSResponse.fail())
 			return
-
-		# TODO:判断是否是该频道成员
-		# TODO:消息队列保存message实现数据持久化
-		group_name = GROUP_NAME.format(group_id)
-		data = WSResponse.group_chat_broadcast(group_id,user.id,message)
-		await self.consumer.channel_layer.group_send(group_name,data)
-
+		# 判断是否是该频道成员
+		if not await self._user_in_channel(channel_id, user.id):
+			await self.consumer.send(WSResponse.fail(message='非频道成员'))
+			return
+		# 判断是否禁言
+		if not await self.channel_mute_cache.can_user_send(channel_id, user.id):
+			await self.consumer.send(WSResponse.fail(message='禁止发言'))
+			return
+		# 发送消息
+		message_id = get_snowflake_id()
+		channel_name = CHANNEL_NAME.format(channel_id)
+		data = WSResponse.group_chat_broadcast(channel_id, user.id, message, message_id)
+		await self.consumer.channel_layer.group_send(channel_name, data)
+		# 消息队列保存message实现数据持久化
+		save_message_async.delay(channel_id, user.id, message_id, message)
 
 	# 私聊
 	async def _private_chat(self):
 		pass
+
+	async def _user_in_channel(self, channel_id, user_id):
+		key = CHANNEL_MEMBERS.format(channel_id)
+		if not await redis_client.exists(key):
+			member_ids = await self.get_channel_member_ids(channel_id)
+			if not member_ids:
+				return False
+			await redis_client.sadd(key, *member_ids)
+		return await redis_client.sismember(key, user_id)
+
+	@sync_to_async
+	def get_channel_member_ids(self, channel_id):
+		return list(ChannelMember.objects.filter(channel_id=channel_id).values_list('user_id', flat=True))
