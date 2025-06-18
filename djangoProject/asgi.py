@@ -20,7 +20,6 @@ import certifi
 
 ssl._create_default_https_context = ssl.create_default_context(cafile=certifi.where())
 
-
 import os
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'djangoProject.settings')
@@ -33,10 +32,12 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from chat.routing import websocket_urlpatterns
 from django.core.asgi import get_asgi_application
+from chat.middleware import JWTAuthMiddleware
+
 
 application = ProtocolTypeRouter({
 	"http": get_asgi_application(),  # 保持http协议处理同步请求
-	"websocket": AuthMiddlewareStack(  # 自动将 session/cookie 用户绑定到 scope["user"]
+	"websocket": JWTAuthMiddleware(  # 自动将jwt用户绑定到 scope["user"]
 		# 异步处理websocket协议
 		URLRouter(
 			websocket_urlpatterns

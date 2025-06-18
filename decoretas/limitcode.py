@@ -15,8 +15,11 @@ def rate_limit_by_ip(limit_key_prefix="limit_code", seconds=60):
             key = f"{limit_key_prefix}:{ip}"
             if redis_client.get(key):
                 return JsonResponse(
-                    {"error": "请求过于频繁，请稍后再试"},
-                    status=429
+                    {
+                        "code": 1005,
+                        "message": "请求过于频繁，请稍后再试"
+                    },
+                    status=200
                 )
             # 设置标记，限流时间为 seconds 秒
             redis_client.set(key, "1", ex=seconds)

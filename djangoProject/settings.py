@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-ys9q#imzw6=8k7gh7e3x*y+&$p_6=(k7)(5#vi64l+nr4l2=8+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '120.26.129.134']
+ALLOWED_HOSTS = ['127.0.0.1', '120.26.129.134', '47.122.130.222']
 
 # Application definition
 
@@ -88,7 +88,7 @@ DATABASES = {
 	'default': {
 		'ENGINE': 'django.db.backends.mysql',
 		'NAME': 'ChatRoom',
-		'HOST': '120.26.129.134',
+		'HOST': '47.122.130.222',
 		'PORT': 3306,
 		'USER': 'root',
 		'PASSWORD': 'Lzh040127',
@@ -99,13 +99,13 @@ DATABASES = {
 	}
 }
 
-#redis配置
+# redis配置
 CHANNEL_LAYERS = {
 	"default": {
 		"BACKEND": "channels_redis.core.RedisChannelLayer",
 		"CONFIG": {
 			"hosts": [
-				"redis://:Lzh040127!%40%23%24%25@120.26.129.134:8000/3"
+				"redis://:Lzh040127!%40%23%24%25@47.122.130.222:8000/3"
 			],
 		},
 	},
@@ -115,10 +115,10 @@ CHANNEL_LAYERS = {
 from urllib.parse import quote_plus
 
 REDIS_PASSWORD = quote_plus("Lzh040127！@#$%")
-CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@120.26.129.134:8000/5"
+CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@47.122.130.222:8000/5"
 
 REDIS_CACHE_CONFIG = {
-	"host": '120.26.129.134',
+	"host": '47.122.130.222',
 	"port": 8000,
 	"db": 4,
 	"password": 'Lzh040127!@#$%',
@@ -145,10 +145,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # 用户后端验证类
 AUTHENTICATION_BACKENDS = [
-    'accounts.auth_backend.EmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
+	'accounts.auth_backend.EmailBackend',
+	'django.contrib.auth.backends.ModelBackend',
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -160,15 +159,13 @@ TIME_ZONE = 'Asia/Shanghai'
 USE_TZ = False
 USE_I18N = True
 
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+	os.path.join(BASE_DIR, 'static'),
 ]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -185,28 +182,22 @@ EMAIL_HOST_USER = '3082566812@qq.com'
 EMAIL_HOST_PASSWORD = 'plkrqnacstvsdfig'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-
 # drf配置
 REST_FRAMEWORK = {
 	# jwt配置
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'utils.jwt_authentication.JWTAuthentication',
-    ),
+	'DEFAULT_AUTHENTICATION_CLASSES': (
+		'utils.jwt_authentication.JWTAuthentication',
+	),
 	# 配置序列化器异常处理函数
 	'EXCEPTION_HANDLER': 'utils.exception_handle.custom_exception_handler',
 }
-
-
-
-
-
 
 # 配置 token 过期时间
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),     # access token 有效期
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),        # refresh token 有效期
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # access token 有效期
+	'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # refresh token 有效期
+	'ROTATE_REFRESH_TOKENS': True,
+	'BLACKLIST_AFTER_ROTATION': True,
 }

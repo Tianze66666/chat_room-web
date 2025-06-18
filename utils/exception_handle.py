@@ -8,6 +8,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 
 def custom_exception_handler(exc, context):
 	response = exception_handler(exc, context)
+	print(exc)
 	# 捕获序列化器验证错误
 	if isinstance(exc, ValidationError):
 		detail = exc.detail

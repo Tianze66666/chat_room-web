@@ -11,10 +11,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 	async def connect(self):
 		await self.accept()
+		# data = {
+		# 	'code': 401,
+		# }
+		# await self.send(text_data=json.dumps(data,ensure_ascii=False))
+
+		user = self.scope['user']
+		if not user.is_authenticated:
+			data = {
+				'code':401,
+				'message':'非法连接'
+			}
+			await self.send(text_data=json.dumps(data,
+			                                     ensure_ascii=False))
+			await self.close()
 		print('用户连接')
 
-
-	async def disconnect(self, close_code):
+	async def disconnect(self, close_code=400):
 		# 离开所有 group
 		print('用户离开')
 
@@ -27,6 +40,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		}
 		"""
 		data = json.loads(text_data)
-		print('收到消息',data)
+		print('收到消息', data)
 		await self.send(text_data=json.dumps(data))
-

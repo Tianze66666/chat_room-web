@@ -1,5 +1,4 @@
 from djangoProject import submit_task as pool_submit_task, settings
-from rest_framework import status
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 import random

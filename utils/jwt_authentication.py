@@ -14,6 +14,6 @@ class JWTAuthentication(SimpleJWTAuthentication):
 		user, validated_token = user_auth_tuple
 		current_access_jti = redis_client.get(f"user:access:{user.id}")
 		if validated_token['jti'] != current_access_jti:
-			raise AuthenticationFailed('Token 已失效，请重新登录',code=1003)
-			# return None  # token过期
+			# raise AuthenticationFailed('Token 已失效，请重新登录',code=1003)
+			return None  # token过期
 		return user, validated_token
