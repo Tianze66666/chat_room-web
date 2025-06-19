@@ -1,0 +1,39 @@
+# 忽略 Python 缓存文件
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.log
+*.sqlite3
+
+# 忽略虚拟环境目录（根据你的实际名称修改）
+env/
+venv/
+envs/
+chat-env/
+
+# 忽略 IDE 相关文件（可选）
+.vscode/
+.idea/
+
+# 忽略 Django 的静态文件收集目录
+staticfiles/
+
+# 忽略 media 上传文件（如果是自动生成的）
+media/
+
+# 忽略迁移文件（channel 应用）
+channel/migrations/
+!channel/migrations/__init__.py  # 保留 init 文件以确保模块加载正常
+
+# 忽略其他 app 的 migrations 可参照上方添加
+message/migrations/
+!message/migrations/__init__.py
+accounts/migrations/
+!accounts/migrations/__init__.py
+chat/migrations/
+!chat/migrations/__init__.py
+# 忽略系统文件
+.DS_Store
+Thumbs.db

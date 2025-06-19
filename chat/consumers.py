@@ -6,7 +6,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from utils.ws_response import WSResponse
 from djangoProject.configer import USER_CHANNEL_KEY, CHANNEL_NAME
-from .models import ChannelMember
+from channel.models import ChannelMember
 from .message_router import dispatch_message
 from utils.aredis import async_set, async_get
 

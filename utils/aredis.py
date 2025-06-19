@@ -4,7 +4,7 @@
 import redis.asyncio as redis
 from django.conf import settings
 from djangoProject.configer import CHANNEL_MEMBERS, CHANNEL_MUTED, CHANNEL_ALL_MUTED
-from chat.models import ChannelMember
+from channel.models import ChannelMember
 from asgiref.sync import sync_to_async
 
 redis_client = redis.Redis(

@@ -5,7 +5,7 @@ from utils.flake_id import get_snowflake_id
 from djangoProject.configer import CHANNEL_NAME, CHANNEL_MEMBERS
 from chat.tasks import save_message_async
 from utils.aredis import redis_client,ChannelMuteCache
-from chat.models import ChannelMember
+from channel.models import ChannelMember
 from asgiref.sync import sync_to_async
 
 

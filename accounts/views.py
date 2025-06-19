@@ -17,7 +17,7 @@ from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken
 from utils.sredis import redis_client
 from .models import User
 from djangoProject.configer import VERIFY_CODE_EXP, EMAIL_VERIFY_CODE_MESSAGE, EMAIL_VERIFY_CODE_SUBJECT
-from chat.models import ChannelMember,Channel
+from channel.models import ChannelMember,Channel
 
 # Create your views here.
 

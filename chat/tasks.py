@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
 from celery import shared_task
-from .models import Message, Channel
+from message.models import Message, Channel
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
