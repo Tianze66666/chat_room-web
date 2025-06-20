@@ -91,6 +91,7 @@ class ChannelMember(models.Model):
 	is_admin = models.BooleanField(default=False, verbose_name='是否管理员')
 	is_muted = models.BooleanField(default=False, verbose_name='是否禁言')
 	joined_at = models.DateTimeField(auto_now_add=True, verbose_name='加入时间')
+	muted_until = models.DateTimeField(blank=True, null=True, verbose_name='禁言截止时间')
 
 	class Meta:
 		db_table = 'chat_channel_member'

@@ -41,8 +41,9 @@ class GroupChatHandles(object):
 			await self.consumer.send(WSResponse.fail(message='非频道成员'))
 			return
 		# 判断是否禁言
-		if not await self.channel_mute_cache.can_user_send(channel_id, user.id):
-			await self.consumer.send(WSResponse.fail(message='禁止发言'))
+		result, ex = await self.channel_mute_cache.can_user_send(channel_id, user.id)
+		if not result:
+			await self.consumer.send(WSResponse.user_is_mute(ex=ex))
 			return
 		# 发送消息
 		message_id = get_snowflake_id()

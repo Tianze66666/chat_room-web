@@ -3,6 +3,7 @@
 
 import redis
 from django.conf import settings
+from djangoProject.configer import USER_TOKEN_KEY
 
 redis_client = redis.Redis(
     host=settings.REDIS_CACHE_CONFIG['host'],
@@ -16,7 +17,7 @@ class ChangeTokenStatusMixin:
     def __init__(self):
         self.ex_access = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
         self.ex_refresh = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
-        self.key = "user:{}:{}"
+        self.key = USER_TOKEN_KEY
         self.mode_dic = {
             0:self.set_token,
             1:self.delete_token,

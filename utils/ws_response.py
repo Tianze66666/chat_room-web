@@ -14,9 +14,20 @@ class WSResponse:
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
+	def user_is_mute(cls,message='用户被禁言',code=501,ex=None):
+		data = {
+			'code': code,
+			'message': message
+		}
+		if ex:
+			data['ex'] = ex.strftime("%Y-%m-%d %H:%M:%S")
+		return json.dumps(data, ensure_ascii=False)
+
+
+	@classmethod
 	def type_error(cls, message='不支持的消息类型'):
 		data = {
-			'code': 400,
+			'code': 500,
 			'message': message
 		}
 		return json.dumps(data, ensure_ascii=False)
@@ -31,10 +42,10 @@ class WSResponse:
 		return data
 
 	@classmethod
-	def invalid_connect(cls):
+	def invalid_connect(cls,message='非法连接'):
 		data = {
 			'code': 401,
-			'message': '非法连接'
+			'message': message
 		}
 		return json.dumps(data, ensure_ascii=False)
 
@@ -50,7 +61,7 @@ class WSResponse:
 	@classmethod
 	def group_chat_broadcast(cls, channel_id, sender_id, message, message_id, code=200):
 		data = {
-			"type": "group_chat",
+			"type": "channel_chat",
 			"code": code,
 			"message": message,
 			"message_id": message_id,

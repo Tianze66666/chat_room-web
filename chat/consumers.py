@@ -34,6 +34,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			# 踢掉老连接
 			data = WSResponse.force_disconnect()
 			await self.channel_layer.send(old_channel_name, data)
+
 		print(f'用户{self.user.id}连接')
 		self.channel_ids = await self.get_user_channels(self.user.id)
 		for channel_id in self.channel_ids:
@@ -62,15 +63,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 	async def receive(self, text_data=None, bytes_data=None):
 		# 处理前端消息
+		if not text_data:
+			return
 		data = json.loads(text_data)
 		await dispatch_message(self, data)
 
-	async def group_chat(self, event):
+	async def channel_chat(self, event):
 		if event.get('sender_id') == self.user.id:
 			return  # 跳过自己
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
-	# 获取用户的所有加入频道
+	# 获取用户的所有加入频道   
 	@database_sync_to_async
 	def get_user_channels(self, user_id):
 		channels_id = ChannelMember.objects.filter(user__id=user_id).values_list('channel__id', flat=True)
