@@ -1,7 +1,9 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
+from asgiref.sync import sync_to_async
 from rest_framework_simplejwt.authentication import JWTAuthentication as SimpleJWTAuthentication
 from utils.sredis import redis_client
+from utils.aredis import redis_client as async_redis_client
 from rest_framework.exceptions import AuthenticationFailed
 
 
@@ -17,3 +19,4 @@ class JWTAuthentication(SimpleJWTAuthentication):
 			# raise AuthenticationFailed('Token 已失效，请重新登录',code=1003)
 			return None  # token过期
 		return user, validated_token
+

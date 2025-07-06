@@ -12,4 +12,8 @@ CHANNEL_NAME = 'channel_{}'
 CHANNEL_MEMBERS = 'channel_members:{}'
 CHANNEL_ALL_MUTE_KEY = "channel:all_muted:{}"
 CHANNEL_MUTE_USER_KEY = "channel:muted:{}"
+CHANNEL_INFO_KEY = 'channel:info:{}'
 USER_MUTE_KEY = "mute:{}:{}"
+
+
+USER_INFO_KEY = 'user_info:{}'

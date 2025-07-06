@@ -1,7 +1,8 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
 import json
-
+from utils.get_avatar_url import get_avatar_url
+from django.utils.timezone import now
 
 class WSResponse:
 
@@ -53,19 +54,24 @@ class WSResponse:
 	def init_connection(cls, channel_ids):
 		data = {
 			"code": 200,
+			"type": "init_connection",
 			"message": "连接成功并加入频道",
 			"joined_channels": channel_ids
 		}
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
-	def group_chat_broadcast(cls, channel_id, sender_id, message, message_id, code=200):
+	def group_chat_broadcast(cls, channel_id, sender_id, message, message_id, sender_avatar,sender_name,code=200):
+		sender_avatar_url = get_avatar_url(sender_avatar.url) if sender_avatar else ''
 		data = {
 			"type": "channel_chat",
 			"code": code,
+			"send_time": now().strftime("%Y-%m-%d %H:%M:%S"),
 			"message": message,
 			"message_id": message_id,
 			"channel_id": int(channel_id),
-			"sender_id": sender_id
+			"sender_id": sender_id,
+			"sender_name":sender_name,
+			"sender_avatar":sender_avatar_url,
 		}
 		return data

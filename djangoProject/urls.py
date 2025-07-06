@@ -20,9 +20,13 @@ from django.urls import include
 from .converts import EmailConverter
 from django.urls.converters import register_converter
 
+
 register_converter(EmailConverter,'ema')
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('user/',include('accounts.urls'))
+    path('user/',include('accounts.urls')),
+    path('channel/',include('channel.urls')),
 ]

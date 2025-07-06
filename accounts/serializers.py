@@ -170,6 +170,7 @@ class UpdateUserPasswordSerializer(serializers.Serializer):
 class UserInfoSerializer(serializers.ModelSerializer):
 	avatar_url = serializers.SerializerMethodField()
 	gender = serializers.SerializerMethodField()
+	# user_type = serializers.SerializerMethodField()
 
 	class Meta:
 		model = User
@@ -184,3 +185,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 	@staticmethod
 	def get_gender(obj):
 		return obj.get_gender_display()
+
+	# @staticmethod
+	# def get_user_type(obj):
+	# 	return obj.get_user_type_display()

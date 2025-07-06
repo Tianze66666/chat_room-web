@@ -5,7 +5,10 @@ import random
 from django.core.mail import send_mail
 from asgiref.sync import async_to_sync
 from decoretas.limitcode import rate_limit_by_ip
-from .serializers import UserSerializer, LoginSerializer, UpdateUserPasswordSerializer, UserInfoSerializer
+from .serializers import (UserSerializer,
+                          LoginSerializer,
+                          UpdateUserPasswordSerializer,
+                          UserInfoSerializer)
 from utils.aredis import async_set
 from utils.sredis import ChangeTokenStatusMixin
 from django.utils.timezone import now
@@ -16,7 +19,9 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken
 from utils.sredis import redis_client
 from .models import User
-from djangoProject.configer import VERIFY_CODE_EXP, EMAIL_VERIFY_CODE_MESSAGE, EMAIL_VERIFY_CODE_SUBJECT
+from djangoProject.configer import (VERIFY_CODE_EXP,
+                                    EMAIL_VERIFY_CODE_MESSAGE,
+                                    EMAIL_VERIFY_CODE_SUBJECT)
 from channel.models import ChannelMember,Channel
 
 # Create your views here.
@@ -67,7 +72,7 @@ class RegisterUser(GenericAPIView):
 			user = serializer.save()
 			default_channel = Channel.objects.get(id=1)
 			try:
-				channel_member = ChannelMember.objects.create(user=user,channel=default_channel)
+				ChannelMember.objects.create(user=user,channel=default_channel)
 				return UserResponse.success(data='注册成功')
 			except Exception as e:
 				print(e)
@@ -151,6 +156,7 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 	def post(self, request):
 		# 验证refresh_token是否是最新的
 		raw_refresh_token_str = request.data.get('refresh')
+		print('用户token', raw_refresh_token_str)
 		if not raw_refresh_token_str:
 			return UserResponse.fail(data='缺少refresh token')
 		try:
@@ -168,8 +174,10 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 		try:
 			serializer.is_valid(raise_exception=True)
 		except InvalidToken:
+			print('刷新令牌无效或已过期')
 			return UserResponse.fail(code=1003, data='刷新令牌无效或已过期')
 		except TokenError:
+			print('无效的refresh_token')
 			return UserResponse.fail(code=1003, data='无效的refresh_token')
 		access_token_str = serializer.validated_data['access']
 		access_token = AccessToken(access_token_str)
@@ -178,6 +186,7 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 		refresh_token = RefreshToken(refresh_token_str)
 		refresh_jti = refresh_token['jti']
 		pool_submit_task(self.change_user_token, user_id, refresh_jti, access_jti, 0)
+		print('成功刷新token')
 		return UserResponse.success(data={'access': access_token_str,
 		                                  'refresh': refresh_token_str, })
 

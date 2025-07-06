@@ -4,9 +4,11 @@ from utils.ws_response import WSResponse
 from utils.flake_id import get_snowflake_id
 from djangoProject.configer import CHANNEL_NAME, CHANNEL_MEMBERS
 from chat.tasks import save_message_async
-from utils.aredis import redis_client,ChannelMuteCache
+from utils.aredis import redis_client, ChannelMuteCache
+from utils.channel_member import get_channel_member_ids
 from channel.models import ChannelMember
 from asgiref.sync import sync_to_async
+
 
 
 class GroupChatHandles(object):
@@ -48,7 +50,12 @@ class GroupChatHandles(object):
 		# 发送消息
 		message_id = get_snowflake_id()
 		channel_name = CHANNEL_NAME.format(channel_id)
-		data = WSResponse.group_chat_broadcast(channel_id, user.id, message, message_id)
+		data = WSResponse.group_chat_broadcast(channel_id,
+		                                       user.id,
+		                                       message,
+		                                       message_id,
+		                                       user.avatar,
+		                                       user.name)
 		await self.consumer.channel_layer.group_send(channel_name, data)
 		# 消息队列保存message实现数据持久化
 		save_message_async.delay(channel_id, user.id, message_id, message)
@@ -57,15 +64,14 @@ class GroupChatHandles(object):
 	async def _private_chat(self):
 		pass
 
-	async def _user_in_channel(self, channel_id, user_id):
+	@staticmethod
+	async def _user_in_channel(channel_id, user_id):
 		key = CHANNEL_MEMBERS.format(channel_id)
 		if not await redis_client.exists(key):
-			member_ids = await self.get_channel_member_ids(channel_id)
+			member_ids = await get_channel_member_ids(channel_id)
 			if not member_ids:
 				return False
 			await redis_client.sadd(key, *member_ids)
 		return await redis_client.sismember(key, user_id)
 
-	@sync_to_async
-	def get_channel_member_ids(self, channel_id):
-		return list(ChannelMember.objects.filter(channel_id=channel_id).values_list('user_id', flat=True))
+

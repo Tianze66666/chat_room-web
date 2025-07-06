@@ -26,3 +26,27 @@ class UserResponse:
 		if not data:
 			res.pop('data')
 		return Response(res, status=status)
+
+
+class ChannelResponse:
+	@staticmethod
+	def success(code=2000, data=None, message="success", status=http_status.HTTP_200_OK):
+		res = {
+			"code": code,
+			"message": message,
+			"data": data
+		}
+		if not data:
+			res.pop('data')
+		return Response(res, status=status)
+
+	@staticmethod
+	def fail(code=2001, data=None, message="fail", status=http_status.HTTP_200_OK):
+		res = {
+			"code": code,
+			"message": message,
+			"data": data
+		}
+		if not data:
+			res.pop('data')
+		return Response(res, status=status)

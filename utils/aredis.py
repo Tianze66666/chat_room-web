@@ -148,7 +148,7 @@ class ChannelMuteCache:
 			return False, None  # 非频道成员
 
 		if member.is_admin:
-			return False, None  # 管理员允许发言
+			return True, None  # 管理员允许发言
 
 		result, ex = await self.is_user_muted(channel_id, user_id)
 		if result:
