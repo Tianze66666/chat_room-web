@@ -1,8 +1,11 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
 import json
+import time
 from utils.get_avatar_url import get_avatar_url
 from django.utils.timezone import now
+
+
 
 class WSResponse:
 
@@ -15,10 +18,31 @@ class WSResponse:
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
-	def user_is_mute(cls,message='用户被禁言',code=501,ex=None):
+	def mute_user_notice(cls,mute_user_id,user_id,message='用户被禁言',ex=None):
 		data = {
-			'code': code,
+			'type': 'mute_notice',
+			'user_id': user_id,
+			'mute_user_id': mute_user_id,
 			'message': message
+		}
+		if ex:
+			# data['ex'] = ex.strftime("%Y-%m-%d %H:%M:%S")
+			data['seconds'] = ex
+		return data
+
+	@classmethod
+	def all_mute_user_notice(cls,message='管理员开启了全员禁言'):
+		data = {
+			'type': 'mute_notice',
+			'message': message
+		}
+		return data
+
+	@classmethod
+	def user_is_mute(cls,message='用户被禁言',ex=None,code=501):
+		data = {
+			'code':code,
+			'message':message
 		}
 		if ex:
 			data['ex'] = ex.strftime("%Y-%m-%d %H:%M:%S")
@@ -66,12 +90,13 @@ class WSResponse:
 		data = {
 			"type": "channel_chat",
 			"code": code,
-			"send_time": now().strftime("%Y-%m-%d %H:%M:%S"),
+			"timestamp": int(time.time()) or now().strftime("%Y-%m-%d %H:%M:%S"),
 			"message": message,
 			"message_id": message_id,
 			"channel_id": int(channel_id),
 			"sender_id": sender_id,
-			"sender_name":sender_name,
-			"sender_avatar":sender_avatar_url,
+			"sender_name": sender_name,
+			"sender_avatar": sender_avatar_url,
+			"is_system": 0
 		}
 		return data

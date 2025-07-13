@@ -6,4 +6,5 @@ from . import views
 urlpatterns = [
 	path('members/<int:channel_id>',views.ChannelMembersAPIView.as_view()),
 	path('announcement/last/<int:channel_id>',views.ChannelAnnouncementsLastAPIView.as_view()),
+	path('mute/',views.ChannelMuteUserAPIView.as_view())
 ]

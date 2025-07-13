@@ -10,6 +10,7 @@ from rest_framework.exceptions import AuthenticationFailed
 class JWTAuthentication(SimpleJWTAuthentication):
 	def authenticate(self, request):
 		# 调用父类的认证逻辑
+
 		user_auth_tuple = super().authenticate(request)
 		if user_auth_tuple is None:
 			return None  # 认证失败或无token

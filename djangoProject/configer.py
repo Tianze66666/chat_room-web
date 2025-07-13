@@ -15,5 +15,5 @@ CHANNEL_MUTE_USER_KEY = "channel:muted:{}"
 CHANNEL_INFO_KEY = 'channel:info:{}'
 USER_MUTE_KEY = "mute:{}:{}"
 
-
+CHANNEL_MEMBER_ROLES = "channel_member_roles:{}"
 USER_INFO_KEY = 'user_info:{}'

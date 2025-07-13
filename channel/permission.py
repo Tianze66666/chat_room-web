@@ -28,3 +28,4 @@ class IsChannelMemberPermission(BasePermission):
 		# 判断用户是否是成员（注意redis存的是字符串，所以做类型转换）
 		is_member = redis_client.sismember(key_member_set, user_id)
 		return is_member
+

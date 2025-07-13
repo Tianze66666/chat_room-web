@@ -158,15 +158,18 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 		raw_refresh_token_str = request.data.get('refresh')
 		print('用户token', raw_refresh_token_str)
 		if not raw_refresh_token_str:
+			print('1-------------------')
 			return UserResponse.fail(data='缺少refresh token')
 		try:
 			old_refresh_token = RefreshToken(raw_refresh_token_str)
 			old_refresh_jti = old_refresh_token['jti']
 			user_id = old_refresh_token['user_id']
 		except TokenError:
+			print('2-------------------')
 			return UserResponse.fail(code=1003, data='无效的refresh token')
 		latest_jti = redis_client.get(f"user:refresh:{user_id}")
 		if not latest_jti == old_refresh_jti:
+			print('3-------------------')
 			return UserResponse.fail(code=1003, data='无效的refresh token')
 
 		# 重新签发token并记录
@@ -174,10 +177,10 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 		try:
 			serializer.is_valid(raise_exception=True)
 		except InvalidToken:
-			print('刷新令牌无效或已过期')
+			print('4刷新令牌无效或已过期')
 			return UserResponse.fail(code=1003, data='刷新令牌无效或已过期')
 		except TokenError:
-			print('无效的refresh_token')
+			print('5无效的refresh_token')
 			return UserResponse.fail(code=1003, data='无效的refresh_token')
 		access_token_str = serializer.validated_data['access']
 		access_token = AccessToken(access_token_str)

@@ -38,12 +38,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		print(f'用户{self.user.id}连接')
 
 		self.channels = await self.get_user_channels(self.user.id)
-		print(self.channels)
-
 		for channel in self.channels:
 			group_name = CHANNEL_NAME.format(channel.get('id'))
-			await self.channel_layer.group_add(group_name,
-			                                   self.channel_name)
+			await self.channel_layer.group_add(group_name,self.channel_name)
 			print(f'用户 {self.user.id}:{self.user.name} 加入 channel: {channel.get("id")}:{channel.get("name")}')
 		data = WSResponse.init_connection(self.channels)
 		await self.send(text_data=data)
@@ -78,6 +75,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		# if event.get('sender_id') == self.user.id:
 		# 	return  # 跳过自己
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
+
+	async def mute_notice(self,event):
+		await self.send(text_data=json.dumps(event, ensure_ascii=False))
+
 
 	# 获取用户的所有加入频道   
 	@database_sync_to_async
