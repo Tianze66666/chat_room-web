@@ -130,9 +130,9 @@ class MuteUserUtilsMixin:
 
 		s_redis_client.sadd(set_key, mute_user_id)
 		s_redis_client.setex(mute_key, seconds, 1)
-		data = WSResponse.mute_user_notice(mute_user_id, user_id, ex=seconds)
+		data = WSResponse.mute_user_notice(mute_user_id, user_id, channel_id,seconds=seconds)
 		channel_layer = get_channel_layer()
-		async_to_sync(channel_layer.group_send)(key_channel_name, data)
+		async_to_sync(channel_layer.group_send)(key_channel_name,data)
 
 		# 同步更新数据库
 		expire_time = timezone.now() + timedelta(seconds=seconds)
@@ -148,11 +148,10 @@ class MuteUserUtilsMixin:
 		mute_key = self.key_user_mute_format.format(channel_id, mute_user_id)
 		key_channel_name = self.key_channel_name.format(channel_id)
 
-
 		s_redis_client.srem(set_key, mute_user_id)
 		s_redis_client.delete(mute_key)
 
-		data = WSResponse.mute_user_notice(mute_user_id, user_id, message='解除禁言')
+		data = WSResponse.mute_user_notice(mute_user_id, user_id, channel_id,code=502)
 		channel_layer = get_channel_layer()
 		async_to_sync(channel_layer.group_send)(key_channel_name, data)
 		# 同步更新数据库
@@ -173,7 +172,7 @@ class MuteUserUtilsMixin:
 			channel_all_mute_key = self.key_all_muted_format.format(channel_id)
 			s_redis_client.set(channel_all_mute_key, 1)
 			Channel.objects.filter(id=channel_id).update(is_all_muted=True)
-			data = WSResponse.all_mute_user_notice()
+			data = WSResponse.all_mute_user_notice(channel_id)
 			async_to_sync(channel_layer.group_send)(key_channel_name, data)
 			return
 
@@ -182,7 +181,7 @@ class MuteUserUtilsMixin:
 		if state:
 			s_redis_client.delete(channel_all_mute_key)
 			Channel.objects.filter(id=channel_id).update(is_all_muted=False)
-			data = WSResponse.all_mute_user_notice(message='管理员关闭了全群禁言')
+			data = WSResponse.all_mute_user_notice(channel_id,message='管理员关闭了全群禁言',code=502)
 			async_to_sync(channel_layer.group_send)(key_channel_name, data)
 			return True
 		return False

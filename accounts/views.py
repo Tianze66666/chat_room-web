@@ -21,7 +21,8 @@ from utils.sredis import redis_client
 from .models import User
 from djangoProject.configer import (VERIFY_CODE_EXP,
                                     EMAIL_VERIFY_CODE_MESSAGE,
-                                    EMAIL_VERIFY_CODE_SUBJECT)
+                                    EMAIL_VERIFY_CODE_SUBJECT,
+                                    CHANNEL_MEMBERS)
 from channel.models import ChannelMember,Channel
 
 # Create your views here.
@@ -73,6 +74,9 @@ class RegisterUser(GenericAPIView):
 			default_channel = Channel.objects.get(id=1)
 			try:
 				ChannelMember.objects.create(user=user,channel=default_channel)
+				# redis更新
+				if redis_client.exists(CHANNEL_MEMBERS.format(1)):
+					redis_client.sadd(CHANNEL_MEMBERS.format(1), user.id)
 				return UserResponse.success(data='注册成功')
 			except Exception as e:
 				print(e)

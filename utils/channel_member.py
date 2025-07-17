@@ -4,7 +4,7 @@ from channel.models import ChannelMember
 from asgiref.sync import sync_to_async
 from utils.get_avatar_url import get_avatar_url
 from djangoProject.configer import CHANNEL_MEMBERS, CHANNEL_MEMBER_ROLES
-from utils.aredis import redis_client
+from utils.sredis import redis_client
 from channel.models import Channel
 import json
 

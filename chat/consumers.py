@@ -77,7 +77,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
 	async def mute_notice(self,event):
+		if not event.get('mute_seconds'):
+			event['type'] = 'unmute_notice'
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
+
+	async def all_mute_notice(self,event):
+		await self.send(text_data=json.dumps(event, ensure_ascii=False))
+
 
 
 	# 获取用户的所有加入频道   

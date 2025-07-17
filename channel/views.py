@@ -126,6 +126,9 @@ class ChannelMuteUserAPIView(APIView, MuteUserUtilsMixin, BuildChannelMemberCach
 		channel_id = request_data.get('channel_id')
 		mute_user_id = request_data.get('mute_user_id')
 		seconds = request_data.get('seconds')
+		# 不能对自己操作
+		if mute_user_id == user_id:
+			return ChannelResponse.fail(message='不能对自己进行操作')
 		# 全员禁言
 		if request_data.get('is_all_mute',False):
 			self.change_all_mute_state(channel_id)
@@ -141,9 +144,6 @@ class ChannelMuteUserAPIView(APIView, MuteUserUtilsMixin, BuildChannelMemberCach
 		mute_user_role = int(roles_map.get(str(mute_user_id), 0))
 		if not user_role > mute_user_role:
 			return ChannelResponse.fail(message='你无权操作该用户')
-		# 单人禁言/解除禁言
-		if mute_user_id == user_id:
-			return ChannelResponse.fail(message='不能对自己进行操作')
 		# 解除禁言
 		if not seconds:
 			self.unmute_user(channel_id, mute_user_id,user_id)

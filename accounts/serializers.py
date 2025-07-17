@@ -93,6 +93,7 @@ class LoginSerializer(serializers.Serializer):
 			                    verify_login=True,
 			                    require_email=True)
 			if not user:
+				print('1111')
 				raise serializers.ValidationError('用户名或密码错误', code='authorization')
 			if not user.is_active:
 				raise serializers.ValidationError("该用户已被禁用", code='authorization')
@@ -107,6 +108,7 @@ class LoginSerializer(serializers.Serializer):
 			                    username=username, email=email,
 			                    verify_login=True)
 		if not user:
+			print('2222')
 			raise serializers.ValidationError('用户名或密码错误', code=1001)
 		if not user.is_active:
 			raise serializers.ValidationError("该用户已被禁用", code=1001)

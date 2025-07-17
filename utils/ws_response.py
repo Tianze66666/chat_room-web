@@ -18,23 +18,29 @@ class WSResponse:
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
-	def mute_user_notice(cls,mute_user_id,user_id,message='用户被禁言',ex=None):
+	def mute_user_notice(cls,mute_user_id,user_id,channel_id,seconds=None,code=501):
 		data = {
+			'code': code,
 			'type': 'mute_notice',
 			'user_id': user_id,
 			'mute_user_id': mute_user_id,
-			'message': message
+			'channel_id': channel_id,
+			'timestamp': int(time.time())
 		}
-		if ex:
+		if seconds:
 			# data['ex'] = ex.strftime("%Y-%m-%d %H:%M:%S")
-			data['seconds'] = ex
+			data['mute_seconds'] = seconds
 		return data
 
+
+
 	@classmethod
-	def all_mute_user_notice(cls,message='管理员开启了全员禁言'):
+	def all_mute_user_notice(cls,channel_id,message='管理员开启了全员禁言',code=501):
 		data = {
-			'type': 'mute_notice',
-			'message': message
+			'code': code,
+			'type': 'all_mute_notice',
+			'message': message,
+			'channel_id': channel_id,
 		}
 		return data
 

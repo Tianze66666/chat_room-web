@@ -75,4 +75,5 @@ class GroupChatHandles(object):
 			if not member_ids:
 				return False
 			await redis_client.sadd(key, *member_ids)
+			await redis_client.expire(key,300)
 		return await redis_client.sismember(key, user_id)
