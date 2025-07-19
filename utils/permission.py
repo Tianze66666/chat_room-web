@@ -10,8 +10,9 @@ class IsChannelMemberPermission(BasePermission):
 
 	def has_permission(self, request, view):
 		user = request.user
-		channel_id = view.kwargs.get('channel_id')
+		channel_id = view.kwargs.get('channel_id') or request.GET.get('channel_id')
 		if not user or not user.is_authenticated or not channel_id:
+			print(1)
 			return False
 
 		key_member_set = CHANNEL_MEMBERS.format(channel_id)
@@ -21,11 +22,13 @@ class IsChannelMemberPermission(BasePermission):
 		if not redis_client.exists(key_member_set):
 			member_ids = list(ChannelMember.objects.filter(channel_id=channel_id).values_list('user_id', flat=True))
 			if not member_ids:
+				print(2)
 				return False
 			redis_client.sadd(key_member_set, *member_ids)
 			redis_client.expire(key_member_set, 300)
 
 		# 判断用户是否是成员（注意redis存的是字符串，所以做类型转换）
 		is_member = redis_client.sismember(key_member_set, user_id)
+		print(3, is_member)
 		return is_member
 

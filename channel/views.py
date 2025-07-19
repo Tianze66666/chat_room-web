@@ -13,8 +13,8 @@ from djangoProject.configer import (CHANNEL_MEMBERS,
                                     )
 from utils.sredis import redis_client
 from utils.get_avatar_url import get_avatar_url
-from channel.models import ChannelMember, Channel
-from .permission import IsChannelMemberPermission
+from channel.models import Channel
+from utils.permission import IsChannelMemberPermission
 from datetime import datetime, date
 from utils.channel_member import BuildChannelMemberCacheMixin
 from utils.channel_mute_util import MuteUserUtilsMixin

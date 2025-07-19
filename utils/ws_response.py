@@ -6,7 +6,6 @@ from utils.get_avatar_url import get_avatar_url
 from django.utils.timezone import now
 
 
-
 class WSResponse:
 
 	@classmethod
@@ -18,7 +17,7 @@ class WSResponse:
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
-	def mute_user_notice(cls,mute_user_id,user_id,channel_id,seconds=None,code=501):
+	def mute_user_notice(cls, mute_user_id, user_id, channel_id, seconds=None, code=501):
 		data = {
 			'code': code,
 			'type': 'mute_notice',
@@ -32,10 +31,8 @@ class WSResponse:
 			data['mute_seconds'] = seconds
 		return data
 
-
-
 	@classmethod
-	def all_mute_user_notice(cls,channel_id,message='管理员开启了全员禁言',code=501):
+	def all_mute_user_notice(cls, channel_id, message='管理员开启了全员禁言', code=501):
 		data = {
 			'code': code,
 			'type': 'all_mute_notice',
@@ -45,15 +42,14 @@ class WSResponse:
 		return data
 
 	@classmethod
-	def user_is_mute(cls,message='用户被禁言',ex=None,code=501):
+	def user_is_mute(cls, message='用户被禁言', ex=None, code=501):
 		data = {
-			'code':code,
-			'message':message
+			'code': code,
+			'message': message
 		}
 		if ex:
 			data['ex'] = ex.strftime("%Y-%m-%d %H:%M:%S")
 		return json.dumps(data, ensure_ascii=False)
-
 
 	@classmethod
 	def type_error(cls, message='不支持的消息类型'):
@@ -73,7 +69,7 @@ class WSResponse:
 		return data
 
 	@classmethod
-	def invalid_connect(cls,message='非法连接'):
+	def invalid_connect(cls, message='非法连接'):
 		data = {
 			'code': 401,
 			'message': message
@@ -91,18 +87,17 @@ class WSResponse:
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
-	def group_chat_broadcast(cls, channel_id, sender_id, message, message_id, sender_avatar,sender_name,code=200):
+	def group_chat_broadcast(cls, channel_id, sender_id, message, message_id, sender_avatar, sender_name):
 		sender_avatar_url = get_avatar_url(sender_avatar.url) if sender_avatar else ''
+		# 只返回sender_id 前端自行根据id查找name和avatar_url
 		data = {
-			"type": "channel_chat",
-			"code": code,
+			"type": "channel_chat_text",
 			"timestamp": int(time.time()) or now().strftime("%Y-%m-%d %H:%M:%S"),
 			"message": message,
 			"message_id": message_id,
 			"channel_id": int(channel_id),
 			"sender_id": sender_id,
-			"sender_name": sender_name,
-			"sender_avatar": sender_avatar_url,
-			"is_system": 0
+			# "sender_name": sender_name,
+			# "sender_avatar": sender_avatar_url,
 		}
 		return data

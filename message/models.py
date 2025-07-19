@@ -6,12 +6,20 @@ from django.utils import timezone
 
 # Create your models here.
 class Message(models.Model):
+	TEXT = 'channel_chat_text'
+	FILE = 'channel_chat_file'
+
+	MESSAGE_TYPE_CHOICES = [
+		(TEXT, '文本消息'),
+		(FILE, '文件消息'),
+	]
 	id = models.BigIntegerField(primary_key=True)  # 雪花ID
 	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='发送者', db_constraint=False)
 	channel = models.ForeignKey(Channel, on_delete=models.CASCADE, verbose_name='频道', db_constraint=False)
 	content = models.TextField(blank=True, null=True, verbose_name='消息内容')
 	file_id = models.BigIntegerField(blank=True, null=True, verbose_name='文件ID')
 	timestamp = models.DateTimeField(auto_now_add=True, verbose_name='发送时间')
+	type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default=TEXT, verbose_name='消息类型')
 
 	class Meta:
 		db_table = 'chat_message'

@@ -71,7 +71,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		data = json.loads(text_data)
 		await dispatch_message(self, data)
 
-	async def channel_chat(self, event):
+	async def channel_chat_text(self, event):
 		# if event.get('sender_id') == self.user.id:
 		# 	return  # 跳过自己
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
