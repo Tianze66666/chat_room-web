@@ -3,7 +3,7 @@ from django.core.files.base import ContentFile
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .models import Message,ChatFile
+from .models import Message, ChatFile
 from .serializers import MessageSerializer
 from rest_framework.response import Response
 from utils.permission import IsChannelMemberPermission
@@ -17,11 +17,9 @@ from djangoProject.configer import CHANNEL_NAME
 import time
 
 
-
-
 # 获取历史消息接口
 class GetChannelHistoryMessagesAPIView(APIView):
-	permission_classes = [IsAuthenticated, IsChannelMemberPermission]
+	# permission_classes = [IsAuthenticated, IsChannelMemberPermission]
 
 	def get(self, request, *args, **kwargs):
 		# 获取前端传递的参数
@@ -35,10 +33,12 @@ class GetChannelHistoryMessagesAPIView(APIView):
 		# 获取指定频道的消息
 		if min_id:
 			# 如果传入了最早的消息ID，从该ID之前的消息开始查询
-			messages = Message.objects.select_related('channel').filter(channel_id=channel_id, id__lt=min_id).order_by('-timestamp')[:page_size]
+			messages = Message.objects.select_related('channel').filter(channel_id=channel_id, id__lt=min_id).order_by(
+				'-timestamp')[:page_size]
 		else:
 			# 否则，返回最新的消息
-			messages = Message.objects.select_related('channel').filter(channel_id=channel_id).order_by('-timestamp')[:page_size]
+			messages = Message.objects.select_related('channel').filter(channel_id=channel_id).order_by('-timestamp')[
+			           :page_size]
 
 		# 序列化分页后的数据
 		serializer = MessageSerializer(messages, many=True)
@@ -57,7 +57,7 @@ class SendFileMessageAPIView(APIView):
 	# permission_classes = [IsAuthenticated, IsChannelMemberPermission]
 	parser_classes = (MultiPartParser, FormParser)
 
-	def post(self,request):
+	def post(self, request):
 		user = request.user
 		user_id = 2
 		channel_id = request.data.get("channel_id")  # 获取频道ID
@@ -82,12 +82,11 @@ class SendFileMessageAPIView(APIView):
 			type=message_type
 		)
 
-		data = WSResponse.channel_image_broadcast(channel_id,user_id,message_id,message.file.name)
+		data = WSResponse.channel_image_broadcast(channel_id, user_id, message_id, message.file.url)
 		channel_layer = get_channel_layer()
 		key_channel_name = CHANNEL_NAME.format(channel_id)
-		async_to_sync(channel_layer.group_send)(key_channel_name,data)
+		async_to_sync(channel_layer.group_send)(key_channel_name, data)
 
 		# save_file_and_create_message.delay(user.id, channel_id, message_id,file_temp_path)
 
 		return ChannelResponse.success()
-
