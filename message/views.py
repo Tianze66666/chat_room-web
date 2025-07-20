@@ -1,17 +1,22 @@
-from django.shortcuts import render
+from asgiref.sync import async_to_sync
+from django.core.files.base import ContentFile
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .models import Message
+from .models import Message,ChatFile
 from .serializers import MessageSerializer
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from utils.permission import IsChannelMemberPermission
+from django.core.files.storage import default_storage
+from utils.reponst import ChannelResponse
+from utils.flake_id import get_snowflake_id
+from utils.ws_response import WSResponse
+from .tasks import save_file_and_create_message
+from channels.layers import get_channel_layer
+from djangoProject.configer import CHANNEL_NAME
 import time
 
-class MessagePagination(PageNumberPagination):
-	page_size = 50  # 默认每页50条消息
-	page_size_query_param = 'page_size'  # 客户端可以通过参数传递每页条数
-	max_page_size = 100  # 最大每页条数
+
 
 
 # 获取历史消息接口
@@ -30,10 +35,10 @@ class GetChannelHistoryMessagesAPIView(APIView):
 		# 获取指定频道的消息
 		if min_id:
 			# 如果传入了最早的消息ID，从该ID之前的消息开始查询
-			messages = Message.objects.filter(channel_id=channel_id, id__lt=min_id).order_by('-timestamp')[:page_size]
+			messages = Message.objects.select_related('channel').filter(channel_id=channel_id, id__lt=min_id).order_by('-timestamp')[:page_size]
 		else:
 			# 否则，返回最新的消息
-			messages = Message.objects.filter(channel_id=channel_id).order_by('-timestamp')[:page_size]
+			messages = Message.objects.select_related('channel').filter(channel_id=channel_id).order_by('-timestamp')[:page_size]
 
 		# 序列化分页后的数据
 		serializer = MessageSerializer(messages, many=True)
@@ -45,3 +50,44 @@ class GetChannelHistoryMessagesAPIView(APIView):
 		}
 
 		return Response(data)
+
+
+# 发送图片消息接口
+class SendFileMessageAPIView(APIView):
+	# permission_classes = [IsAuthenticated, IsChannelMemberPermission]
+	parser_classes = (MultiPartParser, FormParser)
+
+	def post(self,request):
+		user = request.user
+		user_id = 2
+		channel_id = request.data.get("channel_id")  # 获取频道ID
+		file = request.FILES.get('file')  # 获取文件数据
+		if not file:
+			return Response({"detail": "没有文件"})
+		print(file.content_type)
+		# 将文件保存到服务器
+		message_id = get_snowflake_id()
+
+		message_type = Message.FILE
+		if 'image' in file.content_type:
+			message_type = Message.IMAGE
+		message = Message.objects.create(
+			id=message_id,
+			user_id=user_id,
+			channel_id=channel_id,
+			file=file,
+			file_name=file.name,
+			file_size=file.size,
+			file_type=file.content_type,
+			type=message_type
+		)
+
+		data = WSResponse.channel_image_broadcast(channel_id,user_id,message_id,message.file.name)
+		channel_layer = get_channel_layer()
+		key_channel_name = CHANNEL_NAME.format(channel_id)
+		async_to_sync(channel_layer.group_send)(key_channel_name,data)
+
+		# save_file_and_create_message.delay(user.id, channel_id, message_id,file_temp_path)
+
+		return ChannelResponse.success()
+

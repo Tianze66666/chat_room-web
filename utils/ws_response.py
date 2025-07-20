@@ -101,3 +101,15 @@ class WSResponse:
 			# "sender_avatar": sender_avatar_url,
 		}
 		return data
+
+	@classmethod
+	def channel_image_broadcast(cls,channel_id,sender_id,message_id,image_url):
+		data = {
+			"type": "channel_chat_image",
+			"message_id": message_id,
+			"timestamp": int(time.time()),
+			"channel_id": int(channel_id),
+			"sender_id": int(sender_id),
+			"image_url": image_url
+		}
+		return data

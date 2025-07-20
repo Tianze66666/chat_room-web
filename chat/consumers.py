@@ -76,6 +76,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		# 	return  # 跳过自己
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
+	async def channel_chat_image(self,event):
+		await self.send(text_data=json.dumps(event, ensure_ascii=False))
+
 	async def mute_notice(self,event):
 		if not event.get('mute_seconds'):
 			event['type'] = 'unmute_notice'
