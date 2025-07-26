@@ -24,14 +24,13 @@ class GetChannelHistoryMessagesAPIView(APIView):
 	def get(self, request, *args, **kwargs):
 		# 获取前端传递的参数
 		channel_id = int(request.query_params.get('channel_id'))
-		page_size = int(request.query_params.get('page_size', 50))  # 每页50条消息
-		min_id = request.query_params.get('min_id')  # 当前页
-
+		page_size = int(request.query_params.get('page_size', 30))  # 每页30条消息
 		if not channel_id:
 			return Response({"error": "channel_id is required"}, status=400)
-
+		min_id = request.query_params.get('min_id') # 当前页
 		# 获取指定频道的消息
 		if min_id:
+			min_id = int(min_id)
 			# 如果传入了最早的消息ID，从该ID之前的消息开始查询
 			messages = Message.objects.select_related('channel').filter(channel_id=channel_id, id__lt=min_id).order_by(
 				'-timestamp')[:page_size]
@@ -62,6 +61,7 @@ class SendFileMessageAPIView(APIView):
 		user_id = user.id or 2
 		channel_id = request.data.get("channel_id")  # 获取频道ID
 		file = request.FILES.get('file')  # 获取文件数据
+		temp_id = request.data.get('temp_id')
 		if not file:
 			return Response({"detail": "没有文件"})
 		print(file.content_type)
@@ -82,7 +82,7 @@ class SendFileMessageAPIView(APIView):
 			type=message_type
 		)
 
-		data = WSResponse.channel_image_broadcast(channel_id, user_id, message_id, message.file.url)
+		data = WSResponse.channel_image_broadcast(channel_id, user_id, message_id, message.file.url,temp_id)
 		channel_layer = get_channel_layer()
 		key_channel_name = CHANNEL_NAME.format(channel_id)
 		async_to_sync(channel_layer.group_send)(key_channel_name, data)

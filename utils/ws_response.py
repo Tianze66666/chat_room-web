@@ -88,23 +88,23 @@ class WSResponse:
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
-	def group_chat_broadcast(cls, channel_id, sender_id, message, message_id, sender_avatar, sender_name):
+	def group_chat_broadcast(cls, channel_id, sender_id, message, message_id, sender_avatar,temp_id):
 		sender_avatar_url = get_avatar_url(sender_avatar.url) if sender_avatar else ''
 		# 只返回sender_id 前端自行根据id查找name和avatar_url
 		data = {
 			"type": "channel_chat_text",
 			"timestamp": int(time.time()) or now().strftime("%Y-%m-%d %H:%M:%S"),
 			"message": message,
-			"message_id": message_id,
+			"message_id": str(message_id),
 			"channel_id": int(channel_id),
 			"sender_id": sender_id,
-			# "sender_name": sender_name,
-			# "sender_avatar": sender_avatar_url,
 		}
+		if temp_id:
+			data['temp_id'] = temp_id
 		return data
 
 	@classmethod
-	def channel_image_broadcast(cls,channel_id,sender_id,message_id,image_url):
+	def channel_image_broadcast(cls,channel_id,sender_id,message_id,image_url,temp_id):
 		data = {
 			"type": "channel_chat_image",
 			"message_id": message_id,
@@ -113,4 +113,6 @@ class WSResponse:
 			"sender_id": int(sender_id),
 			"file_url": get_avatar_url(image_url)
 		}
+		if temp_id:
+			data['temp_id'] = temp_id
 		return data

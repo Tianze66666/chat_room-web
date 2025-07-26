@@ -23,7 +23,7 @@ class MessageSerializer(serializers.ModelSerializer):
 			'type': data.get('type'),
 			'timestamp': timestamp,
 			'message': data.get('content'),
-			'message_id': data.get('id'),
+			'message_id': str(data.get('id')),
 			"channel_id": data['channel'],
 			"sender_id": data['user'],
 		}

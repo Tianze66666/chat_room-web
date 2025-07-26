@@ -58,7 +58,8 @@ class GroupChatHandles(object):
 		                                       message,
 		                                       message_id,
 		                                       user.avatar,
-		                                       user.name)
+		                                       self.data.get('temp_id')
+		                                       )
 		await self.consumer.channel_layer.group_send(channel_name, data)
 		# 消息队列保存message实现数据持久化
 		save_message_async.delay(channel_id, user.id, message_id, message)

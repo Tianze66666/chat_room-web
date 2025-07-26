@@ -7,7 +7,7 @@ from utils.ws_response import WSResponse
 from djangoProject.configer import USER_INFO_KEY
 
 message_type_map = {
-	'chat': GroupChatHandles,
+	'channel_chat_text': GroupChatHandles,
 }
 
 
