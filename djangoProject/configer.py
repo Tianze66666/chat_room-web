@@ -5,11 +5,15 @@ EMAIL_VERIFY_CODE_MESSAGE = '您的验证码是：{}，有效期5分钟，请勿
 
 USER_TOKEN_KEY = 'user:{}:{}'
 
+
 VERIFY_CODE_EXP = 300
 USER_CHANNEL_KEY = 'user_channel_{}'
 
 CHANNEL_NAME = 'channel_{}'
 CHANNEL_MEMBERS = 'channel_members:{}'
+
+CHANNEL_MUTE_SET = 'channel_mute_set:{}'
+
 CHANNEL_ALL_MUTE_KEY = "channel:all_muted:{}"
 CHANNEL_MUTE_USER_KEY = "channel:muted:{}"
 CHANNEL_INFO_KEY = 'channel:info:{}'

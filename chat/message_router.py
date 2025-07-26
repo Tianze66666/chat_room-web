@@ -2,9 +2,9 @@
 # @Author  ：天泽1344
 from rest_framework_simplejwt.tokens import UntypedToken
 from .handdles.chat_handler import GroupChatHandles
-from utils.aredis import async_get
+from utils.aredis import redis_client
 from utils.ws_response import WSResponse
-from djangoProject.configer import USER_TOKEN_KEY
+from djangoProject.configer import USER_INFO_KEY
 
 message_type_map = {
 	'chat': GroupChatHandles,
@@ -14,8 +14,8 @@ message_type_map = {
 async def dispatch_message(consumer, data):
 	# TODO:消息鉴权，验证消息token中的jti是否与缓存一致
 	user_id = consumer.user.id
-	key = USER_TOKEN_KEY.format('access',user_id)
-	current_jti = await async_get(key)
+	key = USER_INFO_KEY.format(user_id)
+	current_jti = await redis_client.hget(key,'access_jti')
 	token = data.get('token')
 	if (not current_jti) or(not token):
 		await invalid_connect(consumer)

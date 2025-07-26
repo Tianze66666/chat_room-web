@@ -8,7 +8,7 @@ from utils.ws_response import WSResponse
 from djangoProject.configer import USER_CHANNEL_KEY, CHANNEL_NAME
 from channel.models import ChannelMember
 from .message_router import dispatch_message
-from utils.aredis import async_set, async_get ,async_delete
+from utils.aredis import async_set, async_get, async_delete
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -40,7 +40,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		self.channels = await self.get_user_channels(self.user.id)
 		for channel in self.channels:
 			group_name = CHANNEL_NAME.format(channel.get('id'))
-			await self.channel_layer.group_add(group_name,self.channel_name)
+			await self.channel_layer.group_add(group_name, self.channel_name)
 			print(f'用户 {self.user.id}:{self.user.name} 加入 channel: {channel.get("id")}:{channel.get("name")}')
 		data = WSResponse.init_connection(self.channels)
 		await self.send(text_data=data)
@@ -57,7 +57,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 				await self.channel_layer.group_discard(group_name, self.channel_name)
 		# 删除redis存储的user_channel_id
 		await async_delete(USER_CHANNEL_KEY.format(self.user.id))
-
 
 	# 强制下线
 	async def force_disconnect(self, event):
@@ -76,26 +75,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		# 	return  # 跳过自己
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
-	async def channel_chat_image(self,event):
+	async def channel_chat_image(self, event):
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
-	async def mute_notice(self,event):
+	async def mute_notice(self, event):
 		if not event.get('mute_seconds'):
 			event['type'] = 'unmute_notice'
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
-	async def all_mute_notice(self,event):
+	async def all_mute_notice(self, event):
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
-
-
-	# 获取用户的所有加入频道   
+	# 获取用户的所有加入频道
 	@database_sync_to_async
 	def get_user_channels(self, user_id):
 		standardized_channels = []
 		channels = (ChannelMember.objects.select_related('channel')
 		            .filter(user__id=user_id)
-		            .values('channel__id','channel__name'))
+		            .values('channel__id', 'channel__name'))
 		for channel in channels:
 			data = {
 				'id': channel.get('channel__id'),

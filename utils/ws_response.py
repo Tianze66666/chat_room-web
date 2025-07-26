@@ -24,7 +24,6 @@ class WSResponse:
 			'user_id': user_id,
 			'mute_user_id': mute_user_id,
 			'channel_id': channel_id,
-			'timestamp': int(time.time())
 		}
 		if seconds:
 			# data['ex'] = ex.strftime("%Y-%m-%d %H:%M:%S")
@@ -42,13 +41,15 @@ class WSResponse:
 		return data
 
 	@classmethod
-	def user_is_mute(cls, message='用户被禁言', ex=None, code=501):
+	def user_is_mute(cls, channel_id,message='用户被禁言', ex=None, code=501):
 		data = {
+			'type': 'user_is_mute',
 			'code': code,
-			'message': message
+			'message': message,
+			'channel_id': channel_id,
 		}
 		if ex:
-			data['ex'] = ex.strftime("%Y-%m-%d %H:%M:%S")
+			data['ex'] = ex
 		return json.dumps(data, ensure_ascii=False)
 
 	@classmethod
@@ -110,6 +111,6 @@ class WSResponse:
 			"timestamp": int(time.time()),
 			"channel_id": int(channel_id),
 			"sender_id": int(sender_id),
-			"image_url": image_url
+			"file_url": get_avatar_url(image_url)
 		}
 		return data

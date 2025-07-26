@@ -59,7 +59,7 @@ class SendFileMessageAPIView(APIView):
 
 	def post(self, request):
 		user = request.user
-		user_id = 2
+		user_id = user.id or 2
 		channel_id = request.data.get("channel_id")  # 获取频道ID
 		file = request.FILES.get('file')  # 获取文件数据
 		if not file:

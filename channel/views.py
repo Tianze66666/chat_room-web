@@ -44,16 +44,16 @@ class ChannelMembersAPIView(BuildChannelMemberCacheMixin, APIView):
 		result = []
 		pipeline = redis_client.pipeline()
 		for uid in user_ids:
-			pipeline.hgetall(self.user_info_key.format(uid))
+			pipeline.hmget(self.user_info_key.format(uid), 'name', 'avatar')
 		cached_data = pipeline.execute()
 		missing_ids = []
 		for uid, data in zip(user_ids, cached_data):
 			role = roles_map.get(uid, 0)
-			if data:
+			if data[0]:
 				result.append({
 					'id': int(uid),
-					'name': data.get('name'),
-					'avatar': data.get('avatar'),
+					'name': data[0],
+					'avatar': data[1],
 					'role': int(role)  # 加入角色信息
 				})
 			else:
@@ -74,7 +74,7 @@ class ChannelMembersAPIView(BuildChannelMemberCacheMixin, APIView):
 					'name': user_data['name'],
 					'avatar': user_data['avatar']
 				})
-				pipeline.expire(f"user_info:{user.id}", 300)
+				# pipeline.expire(f"user_info:{user.id}", 300)
 			pipeline.execute()
 		return result
 
@@ -112,14 +112,6 @@ class ChannelAnnouncementsLastAPIView(APIView):
 class ChannelMuteUserAPIView(APIView, MuteUserUtilsMixin, BuildChannelMemberCacheMixin):
 	permission_classes = [IsAuthenticated]
 
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-		self.key_muted_format = CHANNEL_MUTE_USER_KEY  # 频道禁言成员列表
-		self.key_all_muted_format = CHANNEL_ALL_MUTE_KEY  # 频道是否全员禁言
-		self.key_user_mute_format = USER_MUTE_KEY  # 用户禁言key
-		self.key_channel_name = CHANNEL_NAME
-		self.roles_map_key = CHANNEL_MEMBER_ROLES
-
 	def post(self, request):
 		request_data = request.data
 		user_id = request.user.id
@@ -135,11 +127,12 @@ class ChannelMuteUserAPIView(APIView, MuteUserUtilsMixin, BuildChannelMemberCach
 			return ChannelResponse.success()
 		if not user_id or not channel_id:
 			return ChannelResponse.fail(message='出错了，请稍后再试')
+
 		# 验证两人的权限关系
-		if not redis_client.exists(self.roles_map_key.format(channel_id)):
+		if not redis_client.exists(CHANNEL_MEMBER_ROLES.format(channel_id)):
 			roles_map = self.build_and_cache_channel_roles(channel_id)
 		else:
-			roles_map = redis_client.hgetall(self.roles_map_key.format(channel_id))
+			roles_map = redis_client.hgetall(CHANNEL_MEMBER_ROLES.format(channel_id))
 		user_role = int(roles_map.get(str(user_id), 0))
 		mute_user_role = int(roles_map.get(str(mute_user_id), 0))
 		if not user_role > mute_user_role:
@@ -149,7 +142,7 @@ class ChannelMuteUserAPIView(APIView, MuteUserUtilsMixin, BuildChannelMemberCach
 			self.unmute_user(channel_id, mute_user_id,user_id)
 			return ChannelResponse.success(message='成功解除禁言')
 		# 禁言
-		self.mute_user(channel_id, mute_user_id, seconds,user_id)
+		self.mute_user(channel_id, mute_user_id, int(seconds),user_id)
 		return ChannelResponse.success(message='成功禁言')
 
 

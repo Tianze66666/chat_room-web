@@ -48,7 +48,7 @@ class GroupChatHandles(object):
 			if ex == 0:
 				await self.consumer.send(WSResponse.user_is_mute(message='全群禁言'))
 				return
-			await self.consumer.send(WSResponse.user_is_mute(ex=ex))
+			await self.consumer.send(WSResponse.user_is_mute(channel_id,ex=ex))
 			return
 		# 发送消息
 		message_id = get_snowflake_id()
@@ -67,8 +67,9 @@ class GroupChatHandles(object):
 	async def _private_chat(self):
 		pass
 
-	@staticmethod
-	async def _user_in_channel(channel_id, user_id):
+	async def _user_in_channel(self, channel_id, user_id):
+		if channel_id in self.consumer.channels:
+			return True
 		key = CHANNEL_MEMBERS.format(channel_id)
 		if not await redis_client.exists(key):
 			member_ids = await get_channel_member_ids(channel_id)
@@ -77,3 +78,6 @@ class GroupChatHandles(object):
 			await redis_client.sadd(key, *member_ids)
 			await redis_client.expire(key,300)
 		return await redis_client.sismember(key, user_id)
+
+
+

@@ -10,7 +10,7 @@ from .serializers import (UserSerializer,
                           UpdateUserPasswordSerializer,
                           UserInfoSerializer)
 from utils.aredis import async_set
-from utils.sredis import ChangeTokenStatusMixin
+from .Mixin_utils import ChangeTokenStatusMixin
 from django.utils.timezone import now
 from utils.reponst import UserResponse
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
@@ -22,10 +22,10 @@ from .models import User
 from djangoProject.configer import (VERIFY_CODE_EXP,
                                     EMAIL_VERIFY_CODE_MESSAGE,
                                     EMAIL_VERIFY_CODE_SUBJECT,
-                                    CHANNEL_MEMBERS)
-from channel.models import ChannelMember,Channel
+                                    CHANNEL_MEMBERS,
+                                    USER_INFO_KEY)
+from channel.models import ChannelMember, Channel
 
-# Create your views here.
 
 # 获取验证码
 class GetCheckCode(GenericAPIView):
@@ -73,7 +73,7 @@ class RegisterUser(GenericAPIView):
 			user = serializer.save()
 			default_channel = Channel.objects.get(id=1)
 			try:
-				ChannelMember.objects.create(user=user,channel=default_channel)
+				ChannelMember.objects.create(user=user, channel=default_channel)
 				# redis更新
 				if redis_client.exists(CHANNEL_MEMBERS.format(1)):
 					redis_client.sadd(CHANNEL_MEMBERS.format(1), user.id)
@@ -82,9 +82,9 @@ class RegisterUser(GenericAPIView):
 				print(e)
 		data = next(iter(serializer.errors.values()))[0]
 		if data == '用户已经存在':
-			return UserResponse.fail(code=1004,data=data)
+			return UserResponse.fail(code=1004, data=data)
 		else:
-			return UserResponse.fail(code=1001,data=data)
+			return UserResponse.fail(code=1001, data=data)
 
 
 # 登录接口
@@ -135,9 +135,10 @@ class LogoutUser(ChangeTokenStatusMixin, GenericAPIView):
 
 	@staticmethod
 	def black_refresh_token(user_id):
-		refresh_jti = redis_client.get(f"user:refresh:{user_id}")
-		redis_client.delete(f"user:refresh:{user_id}")
+		key = USER_INFO_KEY.format(user_id)
+		refresh_jti = redis_client.hget(key, "refresh_jti")
 		if refresh_jti:
+			redis_client.hdel(key, "refresh_jti")
 			refresh_token_obj = OutstandingToken.objects.filter(jti=refresh_jti).first()
 			if refresh_token_obj:
 				BlacklistedToken.objects.get_or_create(token=refresh_token_obj)
@@ -160,20 +161,17 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 	def post(self, request):
 		# 验证refresh_token是否是最新的
 		raw_refresh_token_str = request.data.get('refresh')
-		print('用户token', raw_refresh_token_str)
 		if not raw_refresh_token_str:
-			print('1-------------------')
 			return UserResponse.fail(data='缺少refresh token')
 		try:
 			old_refresh_token = RefreshToken(raw_refresh_token_str)
 			old_refresh_jti = old_refresh_token['jti']
 			user_id = old_refresh_token['user_id']
 		except TokenError:
-			print('2-------------------')
 			return UserResponse.fail(code=1003, data='无效的refresh token')
-		latest_jti = redis_client.get(f"user:refresh:{user_id}")
+		key = USER_INFO_KEY.format(user_id)
+		latest_jti = redis_client.hget(key,'refresh_jti')
 		if not latest_jti == old_refresh_jti:
-			print('3-------------------')
 			return UserResponse.fail(code=1003, data='无效的refresh token')
 
 		# 重新签发token并记录
@@ -181,10 +179,8 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 		try:
 			serializer.is_valid(raise_exception=True)
 		except InvalidToken:
-			print('4刷新令牌无效或已过期')
 			return UserResponse.fail(code=1003, data='刷新令牌无效或已过期')
 		except TokenError:
-			print('5无效的refresh_token')
 			return UserResponse.fail(code=1003, data='无效的refresh_token')
 		access_token_str = serializer.validated_data['access']
 		access_token = AccessToken(access_token_str)
@@ -193,7 +189,6 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 		refresh_token = RefreshToken(refresh_token_str)
 		refresh_jti = refresh_token['jti']
 		pool_submit_task(self.change_user_token, user_id, refresh_jti, access_jti, 0)
-		print('成功刷新token')
 		return UserResponse.success(data={'access': access_token_str,
 		                                  'refresh': refresh_token_str, })
 

@@ -3,6 +3,7 @@
 from rest_framework import serializers
 from .models import Message
 from datetime import datetime
+from utils.get_avatar_url import get_avatar_url
 import time
 
 
@@ -27,8 +28,7 @@ class MessageSerializer(serializers.ModelSerializer):
 			"sender_id": data['user'],
 		}
 		if data.get('file'):
-			message_data['file_url'] = data.get('file')
-
+			message_data['file_url'] = get_avatar_url(data.get('file'))
 		return message_data
 
 
