@@ -68,8 +68,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		if not text_data:
 			return
 		data = json.loads(text_data)
+		# await self.send(text_data=json.dumps(data, ensure_ascii=False))
+		# return
 		await dispatch_message(self, data)
 
+	async def user_update_avatar(self,event):
+		await self.send(text_data=json.dumps(event, ensure_ascii=False))
+
+	# 群组聊天群发/用于直接群发
 	async def channel_chat_text(self, event):
 		# if event.get('sender_id') == self.user.id:
 		# 	return  # 跳过自己

@@ -53,7 +53,7 @@ class GetChannelHistoryMessagesAPIView(APIView):
 
 # 发送图片消息接口
 class SendFileMessageAPIView(APIView):
-	# permission_classes = [IsAuthenticated, IsChannelMemberPermission]
+	permission_classes = [IsAuthenticated, IsChannelMemberPermission]
 	parser_classes = (MultiPartParser, FormParser)
 
 	def post(self, request):

@@ -1,6 +1,8 @@
+from rest_framework.parsers import MultiPartParser, FormParser
 from djangoProject import submit_task as pool_submit_task, settings
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
+import os
 import random
 from django.core.mail import send_mail
 from asgiref.sync import async_to_sync
@@ -23,9 +25,10 @@ from djangoProject.configer import (VERIFY_CODE_EXP,
                                     EMAIL_VERIFY_CODE_MESSAGE,
                                     EMAIL_VERIFY_CODE_SUBJECT,
                                     CHANNEL_MEMBERS,
-                                    USER_INFO_KEY)
+                                    USER_INFO_KEY,
+                                    CHANNEL_NAME)
 from channel.models import ChannelMember, Channel
-
+from channels.layers import get_channel_layer
 
 # 获取验证码
 class GetCheckCode(GenericAPIView):
@@ -155,6 +158,7 @@ class UpdatePassword(GenericAPIView):
 		return UserResponse.success()
 
 
+# 刷新token
 class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 	serializer_class = TokenRefreshSerializer
 
@@ -170,7 +174,7 @@ class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 		except TokenError:
 			return UserResponse.fail(code=1003, data='无效的refresh token')
 		key = USER_INFO_KEY.format(user_id)
-		latest_jti = redis_client.hget(key,'refresh_jti')
+		latest_jti = redis_client.hget(key, 'refresh_jti')
 		if not latest_jti == old_refresh_jti:
 			return UserResponse.fail(code=1003, data='无效的refresh token')
 
@@ -200,3 +204,40 @@ class GetUserInfoRetrieveAPIView(RetrieveAPIView):
 
 	def get_object(self):
 		return self.request.user
+
+
+# 更新头像
+class UpdateUserAvatarAPIView(GenericAPIView):
+	permission_classes = [IsAuthenticated]
+	parser_classes = (MultiPartParser, FormParser)
+
+	def post(self,request):
+		user = request.user
+		avatar_file = request.FILES.get('avatar')
+		if not avatar_file:
+			return UserResponse.fail(message='请上传头像')
+		old_avatar_path = user.avatar.path if user.avatar and user.avatar.name != 'static/default_avatar.png' else None
+		user.avatar = avatar_file
+		try:
+			user.save()
+		except Exception as e:
+			return UserResponse.fail(message='保存失败，请稍后重试')
+		# 删除旧头像
+		if old_avatar_path and os.path.exists(old_avatar_path):
+			try:
+				os.remove(old_avatar_path)
+			except Exception as e:
+				pass
+		# 更新redis缓存
+		avatar_url = request.build_absolute_uri(user.avatar.url)
+		if redis_client.exists(USER_INFO_KEY.format(user.id)):
+			redis_client.hset(USER_INFO_KEY.format(user.id), 'avatar', avatar_url)
+		# ws广播通知
+		channel_name = CHANNEL_NAME.format(1)
+		channel_layer = get_channel_layer()
+		async_to_sync(channel_layer.group_send)(channel_name,{
+			'type': 'user_update_avatar',
+			'avatar_url': avatar_url,
+			'user_id':user.id
+		})
+		return UserResponse.success(data=avatar_url)

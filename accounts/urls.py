@@ -11,5 +11,6 @@ urlpatterns = [
 	path('loginout/', views.LogoutUser.as_view(),),
 	path('updatepassword/',views.UpdatePassword.as_view()),
 	path('refreshtoken/',views.RefreshTokenGenericAPIView.as_view()),
-	path('info/',views.GetUserInfoRetrieveAPIView.as_view())
+	path('info/',views.GetUserInfoRetrieveAPIView.as_view()),
+	path('update/avatar/',views.UpdateUserAvatarAPIView.as_view())
 ]
