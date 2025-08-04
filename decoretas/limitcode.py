@@ -2,7 +2,7 @@
 # @Author  ：天泽1344
 import functools
 from django.http import JsonResponse
-from utils.sredis import redis_client
+from commom.sredis import redis_client
 
 
 

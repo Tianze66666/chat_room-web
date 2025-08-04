@@ -41,12 +41,15 @@ class Message(models.Model):
 
 class ChatFile(models.Model):
 	file_id = models.BigAutoField(primary_key=True)
+	message_id = models.BigIntegerField(verbose_name='消息ID')
 	uploader_id = models.BigIntegerField(verbose_name='上传用户ID')
 	channel_id = models.BigIntegerField(verbose_name='所属频道ID')
-	file = models.FileField(upload_to='chat_files/', verbose_name='文件')
+	# 文件元信息
+	file_path = models.CharField(max_length=512, verbose_name='文件路径')
 	file_name = models.CharField(max_length=255, verbose_name='文件名')
 	file_size = models.PositiveIntegerField(verbose_name='文件大小', help_text='单位：字节')
 	content_type = models.CharField(max_length=100, blank=True, null=True, verbose_name='MIME类型')
+
 	uploaded_at = models.DateTimeField(default=timezone.now, verbose_name='上传时间')
 	is_temp = models.BooleanField(default=False, verbose_name='是否为临时文件')
 
@@ -56,9 +59,15 @@ class ChatFile(models.Model):
 		verbose_name_plural = '聊天文件记录'
 		ordering = ['-uploaded_at']
 		indexes = [
-			models.Index(fields=['uploader_id']),
 			models.Index(fields=['channel_id']),
+			models.Index(fields=['uploader_id']),
+			models.Index(fields=['uploaded_at']),
 		]
 
 	def __str__(self):
 		return self.file_name
+
+	@property
+	def file_url(self):
+		from django.conf import settings
+		return settings.MEDIA_URL + self.file_path

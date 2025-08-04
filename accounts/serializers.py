@@ -4,10 +4,11 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth import authenticate
 from .models import User
-from utils.sredis import redis_client
+from utils.get_avatar_url import get_avatar_url
+from commom.sredis import redis_client
 
 
-class UserSerializer(serializers.ModelSerializer):
+class RegisterSerializer(serializers.ModelSerializer):
 	password = serializers.CharField(write_only=True, required=True, )
 	avatar_url = serializers.SerializerMethodField(read_only=True)  # 返回avatar图片的完整URL
 	verify_code = serializers.CharField(write_only=True, required=True, max_length=6, min_length=6)
@@ -33,9 +34,9 @@ class UserSerializer(serializers.ModelSerializer):
 		email = attrs.get('email')
 		verify_code = redis_client.get(f'verify_code:{email}')
 		if not verify_code:
-			raise serializers.ValidationError({'verify_code': '请先获取验证码'},code=1001)
+			raise serializers.ValidationError({'verify_code': '请先获取验证码'}, code=1001)
 		if not verify_code == attrs.get('verify_code'):
-			raise serializers.ValidationError({'verify_code': '验证码不一致'},code=1001)
+			raise serializers.ValidationError({'verify_code': '验证码不一致'}, code=1001)
 		return attrs
 
 	def get_avatar_url(self, obj):
@@ -59,7 +60,7 @@ class LoginSerializer(serializers.Serializer):
 	password = serializers.CharField(required=False, write_only=True)
 	username = serializers.CharField(required=False, write_only=True)
 	verify_code = serializers.CharField(required=False, write_only=True,
-	                                    max_length=6, min_length=6)
+										max_length=6, min_length=6)
 
 	def validate(self, attrs):
 		email = attrs.get('email')
@@ -89,9 +90,9 @@ class LoginSerializer(serializers.Serializer):
 		# 没有邮箱，用户名登录，需要先获取该用户绑定的邮箱
 		if not email:
 			user = authenticate(request=self.context.get('request'),
-			                    username=username,
-			                    verify_login=True,
-			                    require_email=True)
+								username=username,
+								verify_login=True,
+								require_email=True)
 			if not user:
 				print('1111')
 				raise serializers.ValidationError('用户名或密码错误', code='authorization')
@@ -100,13 +101,13 @@ class LoginSerializer(serializers.Serializer):
 			email = user.email
 		redis_code = redis_client.get(f'verify_code:{email}')
 		if not redis_code:
-			raise serializers.ValidationError({'verify_code': '请获取验证码'},code=1001)
+			raise serializers.ValidationError({'verify_code': '请获取验证码'}, code=1001)
 		if not redis_code == verify_code:
-			raise serializers.ValidationError({'verify_code': '验证码错误'},code=1001)
+			raise serializers.ValidationError({'verify_code': '验证码错误'}, code=1001)
 		if not user:
 			user = authenticate(request=self.context.get('request'),
-			                    username=username, email=email,
-			                    verify_login=True)
+								username=username, email=email,
+								verify_login=True)
 		if not user:
 			print('2222')
 			raise serializers.ValidationError('用户名或密码错误', code=1001)
@@ -135,7 +136,7 @@ class UpdateUserPasswordSerializer(serializers.Serializer):
 				user = User.objects.get(email=email)
 				self.user = user
 			except Exception:
-				raise serializers.ValidationError({'email': '用户不存在'},code=1001)
+				raise serializers.ValidationError({'email': '用户不存在'}, code=1001)
 		else:
 			username = attrs.get('username')
 			try:
@@ -143,23 +144,23 @@ class UpdateUserPasswordSerializer(serializers.Serializer):
 				self.user = user
 				email = user.email
 			except Exception:
-				raise serializers.ValidationError({'email': '用户不存在'},code=1001)
+				raise serializers.ValidationError({'email': '用户不存在'}, code=1001)
 		verify_code = attrs.get('verify_code')
 		# 验证码修改
 		if not attrs.get('old_password'):
 			redis_code = redis_client.get(f'verify_code:{email}')
 			if not redis_code:
-				raise serializers.ValidationError({'verify_code': '请获取验证码'},code=1001)
+				raise serializers.ValidationError({'verify_code': '请获取验证码'}, code=1001)
 			if not verify_code:
-				raise serializers.ValidationError({'verify_code': '请带上验证码'},code=1001)
+				raise serializers.ValidationError({'verify_code': '请带上验证码'}, code=1001)
 			if verify_code != redis_code:
-				raise serializers.ValidationError({'verify_code': '验证码不一致'},code=1001)
+				raise serializers.ValidationError({'verify_code': '验证码不一致'}, code=1001)
 			redis_client.delete(f'verify_code:{email}')
 			return attrs
 		if attrs.get('old_password') == attrs.get('password'):
-			raise serializers.ValidationError({'password': '新旧密码不能一致'},code=1001)
+			raise serializers.ValidationError({'password': '新旧密码不能一致'}, code=1001)
 		if not user.check_password(attrs.get('old_password')):
-			raise serializers.ValidationError({'old_password': '旧密码错误'},code=1001)
+			raise serializers.ValidationError({'old_password': '旧密码错误'}, code=1001)
 		return attrs
 
 	def save(self):
@@ -170,24 +171,64 @@ class UpdateUserPasswordSerializer(serializers.Serializer):
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
-	avatar_url = serializers.SerializerMethodField()
 	gender = serializers.SerializerMethodField()
-	# user_type = serializers.SerializerMethodField()
+	birthday = serializers.SerializerMethodField()
+	phone = serializers.SerializerMethodField()
+	avatar = serializers.SerializerMethodField()
 
 	class Meta:
 		model = User
-		fields = ['id', 'username', 'name', 'email', 'gender', 'birthday', 'phone', 'user_type', 'avatar_url']
+		fields = ['id', 'username', 'name', 'email', 'gender', 'birthday', 'phone', 'avatar', 'user_type']
+		extra_kwargs = {
+			'username': {'required': False},
+			'email': {'required': False},
+		}
 
-	def get_avatar_url(self, obj):
-		request = self.context.get('request')
-		if obj.avatar and request:
-			return request.build_absolute_uri(obj.avatar.url)
+	def get_gender(self, obj):
+		if hasattr(obj, 'profile') and obj.profile.gender:
+			return obj.profile.get_gender_display()
 		return None
 
-	@staticmethod
-	def get_gender(obj):
-		return obj.get_gender_display()
+	def get_birthday(self, obj):
+		return obj.profile.birthday if hasattr(obj, 'profile') else None
 
-	# @staticmethod
-	# def get_user_type(obj):
-	# 	return obj.get_user_type_display()
+	def get_phone(self, obj):
+		return obj.profile.phone if hasattr(obj, 'profile') else None
+
+	def get_avatar(self, obj):
+		return get_avatar_url(obj.profile.avatar.url if hasattr(obj, 'profile') and obj.profile.avatar else None)
+
+	def validate_username(self, value):
+		user = self.instance
+		if User.objects.exclude(id=user.id).filter(username=value).exists():
+			raise serializers.ValidationError("该用户名已被占用")
+		return value
+
+	def validate_email(self, value):
+		user = self.instance
+		if User.objects.exclude(id=user.id).filter(email=value).exists():
+			raise serializers.ValidationError("该邮箱已被占用")
+		return value
+
+	def update(self, instance, validated_data):
+		profile_data = {
+			'birthday': self.initial_data.get('birthday'),
+			'gender': self.initial_data.get('gender'),
+			'phone': self.initial_data.get('phone'),
+			'avatar': self.initial_data.get('avatar'),
+		}
+
+		# 更新 User 表字段
+		instance.username = validated_data.get('username', instance.username)
+		instance.name = validated_data.get('name', instance.name)
+		instance.email = validated_data.get('email', instance.email)
+		instance.save()
+
+		# 更新 UserProfile 表字段
+		profile = instance.profile
+		for field, value in profile_data.items():
+			if value is not None:
+				setattr(profile, field, value)
+		profile.save()
+
+		return instance

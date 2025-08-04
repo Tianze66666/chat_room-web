@@ -1,17 +1,14 @@
 from asgiref.sync import async_to_sync
-from django.core.files.base import ContentFile
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .models import Message, ChatFile
+from .models import Message
 from .serializers import MessageSerializer
 from rest_framework.response import Response
-from utils.permission import IsChannelMemberPermission
-from django.core.files.storage import default_storage
-from utils.reponst import ChannelResponse
-from utils.flake_id import get_snowflake_id
-from utils.ws_response import WSResponse
-from .tasks import save_file_and_create_message
+from commom.permission import IsChannelMemberPermission
+from commom.response import ChannelResponse
+from .service.message_service import create_file_message
+from commom.ws_response import WSResponse
 from channels.layers import get_channel_layer
 from djangoProject.configer import CHANNEL_NAME
 import time
@@ -51,42 +48,30 @@ class GetChannelHistoryMessagesAPIView(APIView):
 		return Response(data)
 
 
-# 发送图片消息接口
+# 发送图片/文件消息接口
 class SendFileMessageAPIView(APIView):
 	permission_classes = [IsAuthenticated, IsChannelMemberPermission]
 	parser_classes = (MultiPartParser, FormParser)
 
 	def post(self, request):
 		user = request.user
-		user_id = user.id or 2
+		user_id = user.id
 		channel_id = request.data.get("channel_id")  # 获取频道ID
 		file = request.FILES.get('file')  # 获取文件数据
 		temp_id = request.data.get('temp_id')
 		if not file:
 			return Response({"detail": "没有文件"})
-		print(file.content_type)
+		max_size = 50 * 1024 * 1024  # 50MB
+		if file.size > max_size:
+			return Response({"detail": "文件太大了"})
 		# 将文件保存到服务器
-		message_id = get_snowflake_id()
-
-		message_type = Message.FILE
-		if 'image' in file.content_type:
-			message_type = Message.IMAGE
-		message = Message.objects.create(
-			id=message_id,
-			user_id=user_id,
-			channel_id=channel_id,
-			file=file,
-			file_name=file.name,
-			file_size=file.size,
-			file_type=file.content_type,
-			type=message_type
-		)
-
-		data = WSResponse.channel_image_broadcast(channel_id, user_id, message_id, message.file.url,temp_id)
+		message = create_file_message(user_id,channel_id,file)
+		data = WSResponse.channel_image_broadcast(channel_id, user_id, message.id, message.file.url, temp_id, message.type)
 		channel_layer = get_channel_layer()
 		key_channel_name = CHANNEL_NAME.format(channel_id)
 		async_to_sync(channel_layer.group_send)(key_channel_name, data)
-
-		# save_file_and_create_message.delay(user.id, channel_id, message_id,file_temp_path)
-
 		return ChannelResponse.success()
+
+
+
+

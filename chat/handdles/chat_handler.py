@@ -1,14 +1,12 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
-from utils.ws_response import WSResponse
+from commom.ws_response import WSResponse
 from utils.flake_id import get_snowflake_id
 from djangoProject.configer import CHANNEL_NAME, CHANNEL_MEMBERS
 from chat.tasks import save_message_async
-from utils.aredis import redis_client
+from commom.aredis import redis_client
 from utils.channel_mute_util import ChannelMuteCache
 from utils.channel_member import get_channel_member_ids
-from channel.models import ChannelMember
-from asgiref.sync import sync_to_async
 
 
 class GroupChatHandles(object):

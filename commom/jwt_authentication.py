@@ -1,11 +1,8 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
-from asgiref.sync import sync_to_async
 from rest_framework_simplejwt.authentication import JWTAuthentication as SimpleJWTAuthentication
-from utils.sredis import redis_client
+from commom.sredis import redis_client
 from djangoProject.configer import USER_INFO_KEY
-from utils.aredis import redis_client as async_redis_client
-from rest_framework.exceptions import AuthenticationFailed
 
 
 class JWTAuthentication(SimpleJWTAuthentication):

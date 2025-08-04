@@ -1,28 +1,24 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from utils.reponst import ChannelResponse
+from commom.response import ChannelResponse
 from django.contrib.auth import get_user_model
 from djangoProject.configer import (CHANNEL_MEMBERS,
                                     USER_INFO_KEY,
                                     CHANNEL_INFO_KEY,
-                                    CHANNEL_MEMBER_ROLES,
-                                    CHANNEL_MUTE_USER_KEY,
-                                    CHANNEL_ALL_MUTE_KEY,
-                                    USER_MUTE_KEY,
-									CHANNEL_NAME
+                                    CHANNEL_MEMBER_ROLES
                                     )
-from utils.sredis import redis_client
+from commom.sredis import redis_client
 from utils.get_avatar_url import get_avatar_url
 from channel.models import Channel
-from utils.permission import IsChannelMemberPermission
+from commom.permission import IsChannelMemberPermission
 from datetime import datetime, date
-from utils.channel_member import BuildChannelMemberCacheMixin
-from utils.channel_mute_util import MuteUserUtilsMixin
-
+from commom.mixins.build_channel_member_cache import BuildChannelMemberCacheMixin
+from commom.mixins.mute_user_mixin import MuteUserUtilsMixin
 
 User = get_user_model()
 
 
+# 获取频道成员信息接口
 class ChannelMembersAPIView(BuildChannelMemberCacheMixin, APIView):
 	permission_classes = [IsAuthenticated, IsChannelMemberPermission]
 
@@ -65,7 +61,7 @@ class ChannelMembersAPIView(BuildChannelMemberCacheMixin, APIView):
 				user_data = {
 					'id': user.id,
 					'name': user.name,
-					'avatar': get_avatar_url(user.avatar.url) if user.avatar else '',
+					'avatar': get_avatar_url(user.profile.avatar.url) if user.profile.avatar else '',
 					'role': int(roles_map.get(str(user.id), 0))
 				}
 				result.append(user_data)

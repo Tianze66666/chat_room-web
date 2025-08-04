@@ -7,19 +7,19 @@ import random
 from django.core.mail import send_mail
 from asgiref.sync import async_to_sync
 from decoretas.limitcode import rate_limit_by_ip
-from .serializers import (UserSerializer,
+from .serializers import (RegisterSerializer,
                           LoginSerializer,
                           UpdateUserPasswordSerializer,
                           UserInfoSerializer)
-from utils.aredis import async_set
-from .Mixin_utils import ChangeTokenStatusMixin
+from commom.aredis import async_set
+from .mixin_utils import ChangeTokenStatusMixin
 from django.utils.timezone import now
-from utils.reponst import UserResponse
+from commom.response import UserResponse
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken
-from utils.sredis import redis_client
+from commom.sredis import redis_client
 from .models import User
 from djangoProject.configer import (VERIFY_CODE_EXP,
                                     EMAIL_VERIFY_CODE_MESSAGE,
@@ -29,6 +29,7 @@ from djangoProject.configer import (VERIFY_CODE_EXP,
                                     CHANNEL_NAME)
 from channel.models import ChannelMember, Channel
 from channels.layers import get_channel_layer
+
 
 # 获取验证码
 class GetCheckCode(GenericAPIView):
@@ -68,7 +69,7 @@ class GetCheckCode(GenericAPIView):
 
 # 注册接口
 class RegisterUser(GenericAPIView):
-	serializer_class = UserSerializer
+	serializer_class = RegisterSerializer
 
 	def post(self, request):
 		serializer = self.get_serializer(data=request.data)
@@ -147,17 +148,6 @@ class LogoutUser(ChangeTokenStatusMixin, GenericAPIView):
 				BlacklistedToken.objects.get_or_create(token=refresh_token_obj)
 
 
-# 修改密码
-class UpdatePassword(GenericAPIView):
-	serializer_class = UpdateUserPasswordSerializer
-
-	def post(self, request):
-		serializer = self.get_serializer(data=request.data)
-		serializer.is_valid(raise_exception=True)
-		serializer.save()
-		return UserResponse.success()
-
-
 # 刷新token
 class RefreshTokenGenericAPIView(ChangeTokenStatusMixin, GenericAPIView):
 	serializer_class = TokenRefreshSerializer
@@ -206,20 +196,31 @@ class GetUserInfoRetrieveAPIView(RetrieveAPIView):
 		return self.request.user
 
 
+# 修改密码
+class UpdatePassword(GenericAPIView):
+	serializer_class = UpdateUserPasswordSerializer
+
+	def post(self, request):
+		serializer = self.get_serializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+		return UserResponse.success()
+
+
 # 更新头像
 class UpdateUserAvatarAPIView(GenericAPIView):
 	permission_classes = [IsAuthenticated]
-	parser_classes = (MultiPartParser, FormParser)
+	parser_classes = [MultiPartParser, FormParser]
 
-	def post(self,request):
+	def post(self, request):
 		user = request.user
 		avatar_file = request.FILES.get('avatar')
 		if not avatar_file:
 			return UserResponse.fail(message='请上传头像')
-		old_avatar_path = user.avatar.path if user.avatar and user.avatar.name != 'static/default_avatar.png' else None
-		user.avatar = avatar_file
+		old_avatar_path = user.profile.avatar.path if user.profile.avatar and user.profile.avatar.name != 'static/default_avatar.png' else None
+		user.profile.avatar = avatar_file
 		try:
-			user.save()
+			user.profile.save()
 		except Exception as e:
 			return UserResponse.fail(message='保存失败，请稍后重试')
 		# 删除旧头像
@@ -229,15 +230,29 @@ class UpdateUserAvatarAPIView(GenericAPIView):
 			except Exception as e:
 				pass
 		# 更新redis缓存
-		avatar_url = request.build_absolute_uri(user.avatar.url)
+		avatar_url = request.build_absolute_uri(user.profile.avatar.url)
 		if redis_client.exists(USER_INFO_KEY.format(user.id)):
 			redis_client.hset(USER_INFO_KEY.format(user.id), 'avatar', avatar_url)
 		# ws广播通知
 		channel_name = CHANNEL_NAME.format(1)
 		channel_layer = get_channel_layer()
-		async_to_sync(channel_layer.group_send)(channel_name,{
+		async_to_sync(channel_layer.group_send)(channel_name, {
 			'type': 'user_update_avatar',
-			'avatar_url': avatar_url,
-			'user_id':user.id
+			'avatar': avatar_url,
+			'user_id': user.id
 		})
 		return UserResponse.success(data=avatar_url)
+
+
+# 更新用户信息
+class UpdateUserInfoAPIView(GenericAPIView):
+	permission_classes = [IsAuthenticated]
+	serializer_class = UserInfoSerializer
+
+	def put(self, request):
+		user = request.user
+		ser = self.get_serializer(user, request.data, partial=True)
+		if ser.is_valid():
+			ser.save()
+			return UserResponse.success()
+		return UserResponse.fail(data=ser.errors)

@@ -5,5 +5,5 @@ from . import views
 
 urlpatterns = [
 	path('history/',views.GetChannelHistoryMessagesAPIView.as_view()),
-	path('chatfile',views.SendFileMessageAPIView.as_view())
+	path('chatfile/',views.SendFileMessageAPIView.as_view())
 ]

@@ -9,14 +9,14 @@ from .models import User
 class UserAdmin(DjangoUserAdmin):
     # 自定义显示字段（列表页）
     list_display = ('id', 'username', 'name', 'email', 'user_type', 'is_superuser', 'is_staff', 'is_active')
-    list_filter = ('user_type', 'is_superuser', 'is_staff', 'is_active', 'gender')
-    search_fields = ('username', 'name', 'email', 'phone')
+    list_filter = ('user_type', 'is_superuser', 'is_staff', 'is_active')
+    search_fields = ('username', 'email')
     ordering = ('id',)
 
     # 在编辑页面，分组显示字段，包含自定义字段
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('name', 'email', 'phone', 'avatar', 'gender', 'birthday')}),
+        (_('Personal info'), {'fields': ('name', 'email', 'phone')}),
         (_('Permissions'), {
             'fields': ('user_type', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
@@ -25,7 +25,7 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'name', 'email', 'phone', 'password1', 'password2', 'user_type', 'is_staff', 'is_superuser'),
+            'fields': ('username', 'email', 'password1', 'password2', 'user_type', 'is_staff', 'is_superuser'),
         }),
     )
 

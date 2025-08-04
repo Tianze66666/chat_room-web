@@ -2,7 +2,7 @@
 # @Author  ：天泽1344
 from djangoProject.configer import USER_INFO_KEY
 from django.conf import settings
-from utils.sredis import redis_client
+from commom.sredis import redis_client
 
 
 class ChangeTokenStatusMixin:

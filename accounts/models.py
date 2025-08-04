@@ -1,26 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser,Permission,Group
 
+from djangoProject import settings
+
 
 # Create your models here.
 
 class User(AbstractUser):
-	GENDER_CHOICES = (
-		('M', '男'),
-		('F', '女'),
-		('O', '其他'),
-	)
 	USER_TYPE_CHOICES = (
 		(1,'Super admin'),
 		(2,'Normal user')
 	)
-
 	name = models.CharField(max_length=100)
-	avatar = models.ImageField( upload_to='avatars/', blank=True, null=True,
-	                           default='static/default_avatar.png')
-	gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True,default='O')
-	birthday = models.DateField(blank=True, null=True)
-	phone = models.CharField(max_length=20, blank=True, null=True, unique=True)
 	user_type = models.PositiveSmallIntegerField(default=2,choices=USER_TYPE_CHOICES)  # 1超级管理员 2普通用户
 	user_permissions = models.ManyToManyField(
 		Permission,
@@ -69,5 +60,30 @@ class User(AbstractUser):
 		verbose_name_plural = '用户管理'
 
 
+class UserProfile(models.Model):
+	GENDER_CHOICES = (
+		('M', '男'),
+		('F', '女'),
+		('O', '其他'),
+	)
+	user = models.OneToOneField(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		db_constraint=False,  # 关闭数据库外键约束
+		related_name='profile'
+	)
+	birthday = models.DateField(blank=True, null=True)
+	gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True,default='O')
+	phone = models.CharField(max_length=20, blank=True, null=True, unique=True)
+	avatar = models.ImageField(upload_to='avatars/', blank=True, null=True,
+	                           default='static/default_avatar.png')
+	signature = models.TextField(blank=True, null=True)  # 个性签名等
+	created_at = models.DateTimeField(auto_now=True)
 
+	def __str__(self):
+		return f'用户id:{self.user.username}的个人资料'
+
+	class Meta:
+		verbose_name = '用户资料'
+		verbose_name_plural = '用户资料管理'
 

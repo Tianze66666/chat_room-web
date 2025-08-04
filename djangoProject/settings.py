@@ -195,10 +195,10 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 REST_FRAMEWORK = {
 	# jwt配置
 	'DEFAULT_AUTHENTICATION_CLASSES': (
-		'utils.jwt_authentication.JWTAuthentication',
+		'commom.jwt_authentication.JWTAuthentication',
 	),
 	# 配置序列化器异常处理函数
-	'EXCEPTION_HANDLER': 'utils.exception_handle.custom_exception_handler',
+	'EXCEPTION_HANDLER': 'commom.exception_handle.custom_exception_handler',
 }
 
 # 配置 token 过期时间

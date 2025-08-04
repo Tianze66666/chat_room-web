@@ -2,7 +2,7 @@
 # @Author  ：天泽1344
 from rest_framework.permissions import BasePermission
 from djangoProject.configer import CHANNEL_MEMBERS
-from utils.sredis import redis_client
+from commom.sredis import redis_client
 from channel.models import ChannelMember
 
 class IsChannelMemberPermission(BasePermission):
@@ -10,9 +10,9 @@ class IsChannelMemberPermission(BasePermission):
 
 	def has_permission(self, request, view):
 		user = request.user
-		channel_id = view.kwargs.get('channel_id') or request.GET.get('channel_id')
+		channel_id = view.kwargs.get('channel_id') or request.data.get('channel_id')
 		if not user or not user.is_authenticated or not channel_id:
-			print(1)
+			print(channel_id)
 			return False
 
 		key_member_set = CHANNEL_MEMBERS.format(channel_id)

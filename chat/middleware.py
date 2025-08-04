@@ -9,7 +9,7 @@ from jwt.exceptions import InvalidSignatureError
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from asgiref.sync import sync_to_async
-from utils.aredis import redis_client
+from commom.aredis import redis_client
 from djangoProject.configer import USER_INFO_KEY
 
 

@@ -2,8 +2,8 @@
 # @Author  ：天泽1344
 from rest_framework_simplejwt.tokens import UntypedToken
 from .handdles.chat_handler import GroupChatHandles
-from utils.aredis import redis_client
-from utils.ws_response import WSResponse
+from commom.aredis import redis_client
+from commom.ws_response import WSResponse
 from djangoProject.configer import USER_INFO_KEY
 
 message_type_map = {

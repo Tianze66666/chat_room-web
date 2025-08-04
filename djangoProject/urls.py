@@ -27,7 +27,7 @@ register_converter(EmailConverter,'ema')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('user/',include('accounts.urls')),
-    path('channel/',include('channel.urls')),
-    path('message/',include('message.urls')),
+    path('api/user/',include('accounts.urls')),
+    path('api/channel/',include('channel.urls')),
+    path('api/message/',include('message.urls')),
 ]

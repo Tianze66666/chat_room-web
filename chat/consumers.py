@@ -4,11 +4,11 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from utils.ws_response import WSResponse
+from commom.ws_response import WSResponse
 from djangoProject.configer import USER_CHANNEL_KEY, CHANNEL_NAME
 from channel.models import ChannelMember
 from .message_router import dispatch_message
-from utils.aredis import async_set, async_get, async_delete
+from commom.aredis import async_set, async_get, async_delete
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -82,6 +82,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
 	async def channel_chat_image(self, event):
+		await self.send(text_data=json.dumps(event, ensure_ascii=False))
+
+	async def channel_chat_file(self, event):
 		await self.send(text_data=json.dumps(event, ensure_ascii=False))
 
 	async def mute_notice(self, event):

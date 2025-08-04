@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # @Author  ：天泽1344
-from utils.aredis import redis_client
+from commom.aredis import redis_client
 from django.http.response import JsonResponse
 
 
